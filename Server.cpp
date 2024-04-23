@@ -18,8 +18,8 @@ void	Server::show_clients()
 	std::cout << "Clients connected: " << Clients.size() << std::endl;
 	for (size_t i = 0; i < Clients.size(); i++)
 	{
-		std::cout << "Client " << i + 1 << " fd: " << Clients[i].getfd()  << " username : " << Clients[i].get_username() << " pass: " << Clients[i].get_pass() << " nickname: " << Clients[i].get_nickname() << " auth: " << Clients[i].get_auth() << std::endl;
-		std::cout << "has_user: " << Clients[i].get_user() << " has_nick: " << Clients[i].get_nick() << std::endl;
+		std::cout << "Client " << i + 1 << " fd: " << Clients[i].getfd()  << " username : " << Clients[i].get_username() << " pass: " << Clients[i].get_has_pass() << " nickname: " << Clients[i].get_nickname() << " auth: " << Clients[i].get_auth() << std::endl;
+		std::cout << "has_user: " << Clients[i].get_has_user() << " has_nick: " << Clients[i].get_has_nick() << std::endl;
 	}
 }
 
@@ -246,7 +246,7 @@ void	Server::execute(int fd, std::string *cmd)
 		{
 			for (size_t j = 0; j < Channels.size(); j++)
 			{
-				if (Channels[j].get_name() == cmd[1]) // if channel exists
+				if (Channels[j].get_name() == cmd[1] && is_in_channel(Clients[i], Channels[j])) // if channel exists
 				{
 					for (size_t k = 0; k < Clients.size(); k++) // send message to all clients in channel
 					{
@@ -262,7 +262,6 @@ void	Server::execute(int fd, std::string *cmd)
 					return;
 				}
 			}
-			Server::senderror(401, Clients[i].get_nickname(), fd, " :No such nick/channel\n");
 		}
 		for (size_t j = 0; j < Clients.size(); j++) // send message to specific client
 		{

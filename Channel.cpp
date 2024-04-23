@@ -61,7 +61,7 @@ void Channel::set_operator(Client *cli)
 	{
 		if ((*it)->getfd() == cli->getfd())
 		{
-			(*it)->set_oper(true);
+			(*it)->set_is_oper(true);
 			break;
 		}
 	}
@@ -110,12 +110,12 @@ void Channel::remove_operator(Client *cli)
 	{
 		if ((*it)->getfd() == cli->getfd())
 		{
-			if ((*it)->get_oper() == false)
+			if ((*it)->get_is_oper() == false)
 			{
 				std::cout << "Client is not an operator\n";
 				return;
 			}
-			(*it)->set_oper(false);
+			(*it)->set_is_oper(false);
 			break;
 		}
 		it++;

@@ -2,7 +2,7 @@
 #include "Server.hpp"
 #include "Channel.hpp"
 
-Client::Client() : is_auth(false), is_nick(false), is_user(false), is_oper(false)
+Client::Client() : is_auth(false), has_nick(false), has_user(false), is_oper(false)
 {
 }
 
@@ -14,8 +14,8 @@ void	Client::reset()
 {
 	std::cout << "resetting client\n";
 	this->is_auth = false;
-	this->is_nick = false;
-	this->is_user = false;
+	this->has_nick = false;
+	this->has_user = false;
 	this->is_oper = false;
 	this->has_pass = false;
 	this->username.clear();
@@ -24,7 +24,7 @@ void	Client::reset()
 	this->channels.clear();
 }
 
-Client::Client(int fd, struct sockaddr_in addr, socklen_t addr_len) : is_auth(false), is_nick(false), is_user(false), is_oper(false)
+Client::Client(int fd, struct sockaddr_in addr, socklen_t addr_len) : is_auth(false), has_nick(false), has_user(false), is_oper(false)
 {
 	this->fd = fd;
 	this->addr = addr;
@@ -41,27 +41,27 @@ bool Client::get_auth() const
 	return this->is_auth;
 }
 
-bool Client::get_nick() const
+bool Client::get_has_nick() const
 {
-	return this->is_nick;
+	return this->has_nick;
 }
 
-bool Client::get_user() const
+bool Client::get_has_user() const
 {
-	return this->is_user;
+	return this->has_user;
 }
 
-bool Client::get_oper() const
+bool Client::get_is_oper() const
 {
 	return this->is_oper;
 }
 
-bool Client::get_pass() const
+bool Client::get_has_pass() const
 {
 	return this->has_pass;
 }
 
-void Client::set_pass(bool has_pass)
+void Client::set_has_pass(bool has_pass)
 {
 	this->has_pass = has_pass;
 }
@@ -115,17 +115,17 @@ void Client::set_auth(bool auth)
 	this->is_auth = auth;
 }
 
-void Client::set_nick(bool nick)
+void Client::set_has_nick(bool nick)
 {
-	this->is_nick = nick;
+	this->has_nick = nick;
 }
 
-void Client::set_user(bool user)
+void Client::set_has_user(bool user)
 {
-	this->is_user = user;
+	this->has_user = user;
 }
 
-void Client::set_oper(bool oper)
+void Client::set_is_oper(bool oper)
 {
 	this->is_oper = oper;
 }

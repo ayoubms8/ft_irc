@@ -21,11 +21,12 @@ void	authenticate(std::deque<Client> &clients, int fd, std::string *cmd, std::st
 	}
 	else
 	{
-		cli.set_pass(true);
-		if (cli.get_nick() == false || cli.get_user() == false)
+		if (!cli.get_has_pass())
+			Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
+		cli.set_has_pass(true);
+		if (cli.get_has_nick() == false || cli.get_has_user() == false)
 			return;
 		cli.set_auth(true);
-		Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
 	}
 }
 
@@ -46,23 +47,24 @@ void	nick(std::deque<Client> &Clients, int fd, std::string *cmd)
 			return;
 		}
 	}
-	// if (cli.get_nickname() == cmd[1])
-	// 	cli.set_nickname(cmd[1]);
-	// else
-	// {
-		cli.set_nick(true);
+	if (cli.get_nickname() == cmd[1])
 		cli.set_nickname(cmd[1]);
-		if (cli.get_pass() == false || cli.get_user() == false)
+	else
+	{
+		if (!cli.get_has_nick())
+			Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
+		cli.set_has_nick(true);
+		cli.set_nickname(cmd[1]);
+		if (cli.get_has_pass() == false || cli.get_has_user() == false)
 			return;
 		cli.set_auth(true);
-		Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
-	// }
+	}
 }
 
 void	user(std::deque<Client> &Clients, int fd, std::string *cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
-	if (cli.get_user() == true)
+	if (cli.get_has_user() == true)
 	{
 		Server::senderror(462, cli.get_nickname(), cli.getfd(), " :You may not reregister\n");
 		return;
@@ -74,13 +76,14 @@ void	user(std::deque<Client> &Clients, int fd, std::string *cmd)
 	}
 	else
 	{
-		cli.set_user(true);
+		if (!cli.get_has_user())
+		Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
+		cli.set_has_user(true);
 		cli.set_username(cmd[1]);
 		cli.set_realname(cmd[4]);
-		if (cli.get_nick() == false || cli.get_pass() == false)
+		if (cli.get_has_nick() == false || cli.get_has_pass() == false)
 			return;
 		cli.set_auth(true);
-		Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
 	}
 }
 
