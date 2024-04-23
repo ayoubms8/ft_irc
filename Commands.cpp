@@ -1,5 +1,5 @@
-#include "Commands.hpp"
 #include "Server.hpp"
+#include "Channel.hpp"
 
 Client	&get_client_by_fd(std::deque<Client> &clients, int fd)
 {
@@ -11,10 +11,10 @@ Client	&get_client_by_fd(std::deque<Client> &clients, int fd)
 	throw std::runtime_error("Client not found");
 }
 
-void	authenticate(std::deque<Client> &clients, int fd, std::string *cmd, std::string &password)
+void	Server::authenticate(int fd, std::string *cmd)
 {
-	Client &cli = get_client_by_fd(clients, fd);
-	if (cmd[1].empty() || cmd[1] != password)
+	Client &cli = get_client_by_fd(Clients, fd);
+	if (cmd[1].empty() || cmd[1] != this->password)
 	{
 		Server::senderror(464, cli.get_nickname(), cli.getfd(), " :Password incorrect\n");
 		return;
@@ -30,7 +30,7 @@ void	authenticate(std::deque<Client> &clients, int fd, std::string *cmd, std::st
 	}
 }
 
-void	nick(std::deque<Client> &Clients, int fd, std::string *cmd)
+void	Server::nick(int fd, std::string *cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	size_t j;
@@ -61,7 +61,7 @@ void	nick(std::deque<Client> &Clients, int fd, std::string *cmd)
 	}
 }
 
-void	user(std::deque<Client> &Clients, int fd, std::string *cmd)
+void	Server::user(int fd, std::string *cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (cli.get_has_user() == true)
@@ -77,7 +77,7 @@ void	user(std::deque<Client> &Clients, int fd, std::string *cmd)
 	else
 	{
 		if (!cli.get_has_user())
-		Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
+			Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
 		cli.set_has_user(true);
 		cli.set_username(cmd[1]);
 		cli.set_realname(cmd[4]);
@@ -87,7 +87,7 @@ void	user(std::deque<Client> &Clients, int fd, std::string *cmd)
 	}
 }
 
-void	quit(std::deque<Client> &Clients, int fd, std::string *cmd, std::vector<pollfd> &pollfds)
+void	Server::quit(int fd, std::string *cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	Server::sendresponse(001, cli.get_nickname(), fd, " :Goodbye\n");
@@ -110,4 +110,25 @@ void	quit(std::deque<Client> &Clients, int fd, std::string *cmd, std::vector<pol
 			break;
 		}
 	}
+}
+
+void	Server::join(int fd, std::string *cmd, int i)
+{
+	if (cmd[1].empty() || cmd[1][0] != '#' || cmd[1].size() < 2)//complete parsing
+		{
+			Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
+			return;
+		}
+		for (size_t j = 0; j < Channels.size(); j++)
+		{
+			if (Channels[j].get_name() == cmd[1]) // if channel exists
+			{
+				Clients[i].join_channel(&Channels[j]);
+				return;
+			}
+		}
+		Channel new_channel(cmd[1]);
+		Clients[i].join_channel(&new_channel);
+		Channels.push_back(new_channel);
+		return;
 }

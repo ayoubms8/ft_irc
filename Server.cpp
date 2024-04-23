@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include "Commands.hpp"
 #include "Channel.hpp"
 #include <sstream>
 
@@ -179,13 +178,13 @@ void	Server::execute(int fd, std::string *cmd)
 		if (Clients[i].getfd() == fd)
 			break ;
 	if (cmd[0] == "pass" || cmd[0] == "PASS")
-		authenticate(Clients, fd, cmd, this->password);
+		authenticate(fd, cmd);
 	else if (cmd[0] == "nick" || cmd[0] == "NICK")
-		nick(Clients, fd, cmd);
+		nick(fd, cmd);
 	else if (cmd[0] == "user" || cmd[0] == "USER")
-		user(Clients, fd, cmd);
+		user(fd, cmd);
 	else if (cmd[0] == "quit" || cmd[0] == "QUIT")
-		quit(Clients, fd, cmd, pollfds);
+		quit(fd, cmd);
 	else if (Clients[i].get_auth() == false)
 	{
 		std::cout << "Client " << i + 1 << " needs to authenticate first\n";
@@ -193,23 +192,7 @@ void	Server::execute(int fd, std::string *cmd)
 	}
 	else if (cmd[0] == "join" || cmd[0] == "JOIN")
 	{
-		if (cmd[1].empty() || cmd[1][0] != '#' || cmd[1].size() < 2)//complete parsing
-		{
-			senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
-			return;
-		}
-		for (size_t j = 0; j < Channels.size(); j++)
-		{
-			if (Channels[j].get_name() == cmd[1]) // if channel exists
-			{
-				Clients[i].join_channel(&Channels[j]);
-				return;
-			}
-		}
-		Channel new_channel(cmd[1]);
-		Clients[i].join_channel(&new_channel);
-		Channels.push_back(new_channel);
-		return;
+		join(fd, cmd, i);
 	}
 	else if (cmd[0] == "part" || cmd[0] == "PART")
 	{
@@ -229,7 +212,6 @@ void	Server::execute(int fd, std::string *cmd)
 		}
 		Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
 	}
-	
 	else if (cmd[0] == "privmsg" || cmd[0] == "PRIVMSG")
 	{
 		if (cmd[2].empty())
