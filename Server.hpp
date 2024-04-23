@@ -35,10 +35,13 @@ public:
 	Server(const Server &copy);
 	Server &operator=(const Server &copy);
 
-	void	join(int fd, std::string *cmd, int i);
 	void	authenticate(int fd, std::string *cmd);
 	void	nick(int fd, std::string *cmd);
 	void	user(int fd, std::string *cmd);
 	void	quit(int fd, std::string *cmd);
+	void	join(int fd, std::string *cmd, int i);
+	void	part(int fd, std::string *cmd, int i);
+	void	privmsg(int fd, std::string *cmd, int i);
+	void	topic(int fd, std::string *cmd, int i);
 	~Server();
 };

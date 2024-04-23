@@ -100,6 +100,7 @@ void	Server::AcceptNewClient()
 	Client new_client(new_pol_fd.fd, addr, addr_len);
 	this->Clients.push_back(new_client);
 	std::cout << "New client connected\n";
+	Server::sendresponse(001, "localhost ", new_pol_fd.fd, "Welcome to the server\n");
 }
 
 int	count_args(std::string str)
@@ -137,18 +138,6 @@ std::string	*parse_cmd(std::string str)
 	}
 	cmd[i] = str;
 	return (cmd);
-}
-
-bool	is_in_channel(Client &cli, Channel &channel)
-{
-	std::deque<Client*> clis = channel.get_clients();
-	
-	for (size_t i = 0; i < clis.size(); i++)
-	{
-		if (clis[i]->getfd() == cli.getfd())
-			return (true);
-	}
-	return (false);
 }
 
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
@@ -191,108 +180,13 @@ void	Server::execute(int fd, std::string *cmd)
 		return;
 	}
 	else if (cmd[0] == "join" || cmd[0] == "JOIN")
-	{
 		join(fd, cmd, i);
-	}
 	else if (cmd[0] == "part" || cmd[0] == "PART")
-	{
-		if (cmd[1].empty() || cmd[1][0] != '#' || cmd[1].size() < 2)
-		{
-			Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
-			//complete parsing
-			return;
-		}
-		for (size_t j = 0; j < Channels.size(); j++)
-		{
-			if (Channels[j].get_name() == cmd[1]) // if channel exists
-			{
-				Clients[i].leave_channel(Channels[j].get_name());
-				return;
-			}
-		}
-		Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
-	}
+		part(fd, cmd, i);
 	else if (cmd[0] == "privmsg" || cmd[0] == "PRIVMSG")
-	{
-		if (cmd[2].empty())
-		{
-			Server::senderror(412, Clients[i].get_nickname(), fd, " :No text to send\n");
-			return ;
-		}
-		else if (cmd[1].empty())
-		{
-			Server::senderror(411, Clients[i].get_nickname(), fd, " :No recipient given\n");
-			return ;
-		}
-		else if (cmd[1][0] == '#')
-		{
-			for (size_t j = 0; j < Channels.size(); j++)
-			{
-				if (Channels[j].get_name() == cmd[1] && is_in_channel(Clients[i], Channels[j])) // if channel exists
-				{
-					for (size_t k = 0; k < Clients.size(); k++) // send message to all clients in channel
-					{
-						if (is_in_channel(Clients[k], Channels[j]))
-						{
-							std::stringstream ss;
-							ss << ":localhost PRIVMSG " << cmd[1] << " :" << cmd[2] << "\n";
-							std::string resp = ss.str();
-							if(send(Clients[k].getfd(), resp.c_str(), resp.size(),0) == -1)
-								std::cerr << "send() faild" << std::endl;
-						}
-					}
-					return;
-				}
-			}
-		}
-		for (size_t j = 0; j < Clients.size(); j++) // send message to specific client
-		{
-			if (Clients[j].get_nickname() == cmd[1]) // if client exists
-			{
-				std::stringstream ss;
-				ss << ":localhost PRIVMSG " << cmd[1] << " :" << cmd[2] << "\n";
-				std::string resp = ss.str();
-				if(send(Clients[j].getfd(), resp.c_str(), resp.size(),0) == -1)
-					std::cerr << "send() faild" << std::endl;
-				return;
-			}
-		}
-		Server::senderror(401, Clients[i].get_nickname(), fd, " :No such nick/channel\n");
-	}
+		privmsg(fd, cmd, i);
 	else if (cmd[0] == "topic" || cmd[0] == "TOPIC")
-	{
-		if (cmd[1].empty() || cmd[1][0] != '#')
-		{
-			Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
-			return;
-		}
-		for (size_t j = 0; j < Channels.size(); j++)
-		{
-			if (Channels[j].get_name() == cmd[1]) // if channel exists
-			{
-				if (!is_in_channel(Clients[i], Channels[j]))
-				{
-					Server::senderror(442, Clients[i].get_nickname(), fd, " :You're not on that channel\n");
-					return;
-				}
-				if (cmd[2].empty()) // if no topic is given
-				{
-					if (Channels[j].get_topic().empty())
-						Server::senderror(331, Clients[i].get_nickname(), fd, " :No topic is set\n");
-					else
-						Server::sendresponse(332, Clients[i].get_nickname(), fd, " :" + Channels[j].get_topic() + "\n");
-				}
-				if (Channels[j].get_modes()['t'] == false)
-				{
-					Server::senderror(482, Clients[i].get_nickname(), fd, " :You're not channel operator\n");
-					return;
-				}
-				Channels[j].set_topic(cmd[2]);
-				return;
-			}
-		}
-		Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
-	}
+		topic(fd, cmd, i);
 	else if (cmd[0] == "mode" || cmd[0] == "MODE")
 	{
 	}
