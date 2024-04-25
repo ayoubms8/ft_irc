@@ -11,10 +11,6 @@ Channel::~Channel()
 
 Channel::Channel(std::string name) : name(name)
 {
-	this->invite_only = false;
-	this->has_key = false;
-	this->moderated = false;
-	this->has_topic = false;
 	this->limit = -1;
 	this->modes.insert(std::pair<char, bool>('o', false));
     this->modes.insert(std::pair<char, bool>('i', false));
@@ -30,10 +26,6 @@ Channel::Channel(const Channel &copy)
 
 Channel &Channel::operator=(const Channel &copy)
 {
-	this->invite_only = copy.invite_only;
-	this->has_key = copy.has_key;
-	this->moderated = copy.moderated;
-	this->has_topic = copy.has_topic;
 	this->limit = copy.limit;
 	this->topic = copy.topic;
 	this->name = copy.name;
@@ -44,20 +36,13 @@ Channel &Channel::operator=(const Channel &copy)
 	return *this;
 }
 
-void Channel::set_invite_only(bool invite_only)
-{
-	this->invite_only = invite_only;
-}
-
 void Channel::set_key(std::string key)
 {
 	this->key = key;
-	this->has_key = true;
 }
 
 void Channel::set_operator(Client *cli)
 {
-	this->moderated = true;
 	for (std::map<Client*, bool>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
 	{
 		if ((*it).first->getfd() == cli->getfd())
@@ -71,7 +56,6 @@ void Channel::set_operator(Client *cli)
 void Channel::set_topic(std::string topic)
 {
 	this->topic = topic;
-	this->has_topic = true;
 }
 
 void Channel::set_modes(std::map<char, bool> modes)
@@ -123,21 +107,6 @@ void Channel::remove_operator(Client *cli)
 	}
 }
 
-bool Channel::get_invite_only() const
-{
-	return this->invite_only;
-}
-
-bool Channel::get_has_key() const
-{
-	return this->has_key;
-}
-
-bool Channel::get_has_topic() const
-{
-	return this->has_topic;
-}
-
 std::string Channel::get_key() const
 {
 	return this->key;
@@ -156,11 +125,6 @@ std::string Channel::get_name() const
 int Channel::get_limit() const
 {
 	return this->limit;
-}
-
-bool Channel::get_moderated() const
-{
-	return this->moderated;
 }
 
 std::map<Client*, bool> Channel::get_clients() const
