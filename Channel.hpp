@@ -16,8 +16,9 @@ private:
 	std::string topic;
 	std::string name;
 	std::string key;
-	std::deque<Client*> clients;
+	std::map<Client*, bool> clients;
 	std::map<char, bool> modes;
+	std::vector<std::string> invite_list;
 public:
 	Channel();
 	Channel(std::string name);
@@ -32,16 +33,18 @@ public:
 	void add_client(Client *cli);
 	void remove_client(Client *cli);
 	void remove_operator(Client *cli);
+	void add_invite(std::string invite);
+	void remove_invite(std::string invite);
 	bool get_invite_only() const;
 	bool get_has_key() const;
 	bool get_has_topic() const;
+	bool get_moderated() const;
+	int get_limit() const;
 	std::string get_key() const;
 	std::string get_topic() const;
 	std::string get_name() const;
-	int get_limit() const;
-	bool get_moderated() const;
-	std::deque<Client*> get_clients() const;
-	std::deque<Client*> get_operators() const;
+	std::vector<std::string> get_invite_list() const;
+	std::map<Client*, bool> get_clients() const;
 	std::map<char, bool> get_modes() const;
 	~Channel();
 };

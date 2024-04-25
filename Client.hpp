@@ -17,7 +17,6 @@ private:
 	bool has_nick;
 	bool has_user;
 	bool has_pass;
-	bool is_oper;
 	std::string username;
 	std::string realname;
 	std::string nickname;
@@ -34,7 +33,6 @@ public:
 	bool get_auth() const;
 	bool get_has_nick() const;
 	bool get_has_user() const;
-	bool get_is_oper() const;
 	bool get_has_pass() const;
 	std::vector<Channel*> get_channels() const;
 	void join_channel(Channel *channel);
@@ -45,7 +43,6 @@ public:
 	void set_has_pass(bool pass);
 	void set_has_nick(bool nick);
 	void set_has_user(bool user);
-	void set_is_oper(bool oper);
 	std::string get_username() const;
 	std::string get_nickname() const;
 	std::string get_realname() const;

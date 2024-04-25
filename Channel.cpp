@@ -40,6 +40,7 @@ Channel &Channel::operator=(const Channel &copy)
 	this->key = copy.key;
 	this->clients = copy.clients;
 	this->modes = copy.modes;
+	this->invite_list = copy.invite_list;
 	return *this;
 }
 
@@ -57,11 +58,11 @@ void Channel::set_key(std::string key)
 void Channel::set_operator(Client *cli)
 {
 	this->moderated = true;
-	for (std::deque<Client*>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+	for (std::map<Client*, bool>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
 	{
-		if ((*it)->getfd() == cli->getfd())
+		if ((*it).first->getfd() == cli->getfd())
 		{
-			(*it)->set_is_oper(true);
+			(*it).second = true;
 			break;
 		}
 	}
@@ -85,15 +86,15 @@ void Channel::set_limit(int limit)
 
 void Channel::add_client(Client *cli)
 {
-	this->clients.push_back(cli);
+	this->clients[cli] = false;
 }
 
 void Channel::remove_client(Client *cli)
 {
-	std::deque<Client*>::iterator it = this->clients.begin();
+	std::map<Client*, bool >::iterator it = this->clients.begin();
 	while (it != this->clients.end())
 	{
-		if ((*it)->getfd() == cli->getfd())
+		if ((*it).first->getfd() == cli->getfd())
 		{
 			this->clients.erase(it);
 			std::cout << "Client removed from channel\n";
@@ -105,17 +106,17 @@ void Channel::remove_client(Client *cli)
 
 void Channel::remove_operator(Client *cli)
 {
-	std::deque<Client*>::iterator it = this->clients.begin();
+	std::map<Client*, bool>::iterator it = this->clients.begin();
 	while (it != this->clients.end())
 	{
-		if ((*it)->getfd() == cli->getfd())
+		if ((*it).first->getfd() == cli->getfd())
 		{
-			if ((*it)->get_is_oper() == false)
+			if ((*it).second == false)
 			{
 				std::cout << "Client is not an operator\n";
 				return;
 			}
-			(*it)->set_is_oper(false);
+			(*it).second = false;
 			break;
 		}
 		it++;
@@ -162,7 +163,7 @@ bool Channel::get_moderated() const
 	return this->moderated;
 }
 
-std::deque<Client*> Channel::get_clients() const
+std::map<Client*, bool> Channel::get_clients() const
 {
 	return this->clients;
 }
@@ -170,4 +171,28 @@ std::deque<Client*> Channel::get_clients() const
 std::map<char, bool> Channel::get_modes() const
 {
 	return this->modes;
+}
+
+std::vector<std::string> Channel::get_invite_list() const
+{
+	return this->invite_list;
+}
+
+void Channel::add_invite(std::string invite)
+{
+	this->invite_list.push_back(invite);
+}
+
+void Channel::remove_invite(std::string invite)
+{
+	std::vector<std::string>::iterator it = this->invite_list.begin();
+	while (it != this->invite_list.end())
+	{
+		if (*it == invite)
+		{
+			this->invite_list.erase(it);
+			break;
+		}
+		it++;
+	}
 }

@@ -2,7 +2,7 @@
 #include "Server.hpp"
 #include "Channel.hpp"
 
-Client::Client() : is_auth(false), has_nick(false), has_user(false), is_oper(false)
+Client::Client() : is_auth(false), has_nick(false), has_user(false)
 {
 }
 
@@ -16,7 +16,6 @@ void	Client::reset()
 	this->is_auth = false;
 	this->has_nick = false;
 	this->has_user = false;
-	this->is_oper = false;
 	this->has_pass = false;
 	this->username.clear();
 	this->realname.clear();
@@ -24,7 +23,7 @@ void	Client::reset()
 	this->channels.clear();
 }
 
-Client::Client(int fd, struct sockaddr_in addr, socklen_t addr_len) : is_auth(false), has_nick(false), has_user(false), is_oper(false)
+Client::Client(int fd, struct sockaddr_in addr, socklen_t addr_len) : is_auth(false), has_nick(false), has_user(false)
 {
 	this->fd = fd;
 	this->addr = addr;
@@ -49,11 +48,6 @@ bool Client::get_has_nick() const
 bool Client::get_has_user() const
 {
 	return this->has_user;
-}
-
-bool Client::get_is_oper() const
-{
-	return this->is_oper;
 }
 
 bool Client::get_has_pass() const
@@ -101,7 +95,6 @@ void Client::leave_channel(std::string channel_name)
 	{
 		if ((*it)->get_name() == channel_name)
 		{
-			(*it)->remove_client(this);
 			this->channels.erase(it);
 			Server::sendresponse(331, this->nickname, this->fd, " :Channel left\n");
 			return;
@@ -123,11 +116,6 @@ void Client::set_has_nick(bool nick)
 void Client::set_has_user(bool user)
 {
 	this->has_user = user;
-}
-
-void Client::set_is_oper(bool oper)
-{
-	this->is_oper = oper;
 }
 
 std::string Client::get_username() const

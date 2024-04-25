@@ -161,7 +161,7 @@ void Server::sendresponse(int code, std::string clientname, int fd, std::string 
 
 void	Server::execute(int fd, std::string *cmd)
 {
-	// kick join part privmsg topic mode user nick pass quit
+	// kick join part privmsg topic mode user nick pass quit invite
 	int i = -1;
 	while (++i < Clients.size())
 		if (Clients[i].getfd() == fd)
@@ -189,9 +189,15 @@ void	Server::execute(int fd, std::string *cmd)
 		topic(fd, cmd, i);
 	else if (cmd[0] == "mode" || cmd[0] == "MODE")
 	{
+		mode(fd, cmd, i);
 	}
 	else if (cmd[0] == "kick" || cmd[0] == "KICK")
 	{
+		kick(fd, cmd, i);
+	}
+	else if (cmd[0] == "invite" || cmd[0] == "INVITE")
+	{
+		invite(fd, cmd, i);
 	}
 	else
 	{
