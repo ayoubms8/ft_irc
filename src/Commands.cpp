@@ -1,5 +1,5 @@
-#include "Server.hpp"
-#include "Channel.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/Channel.hpp"
 #include <sstream>
 
 bool	is_in_channel(Client &cli, Channel &channel)
@@ -17,6 +17,7 @@ bool	is_in_channel(Client &cli, Channel &channel)
 
 void	Server::invite_only_join(int fd, std::string *cmd, Client &cli, Channel &channel)
 {
+	(void)cmd;
 	for (size_t k = 0; k < channel.get_invite_list().size(); k++)
 	{
 		if (channel.get_invite_list()[k] == cli.get_nickname())

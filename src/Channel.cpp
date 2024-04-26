@@ -1,6 +1,6 @@
-#include "Channel.hpp"
-#include "Client.hpp"
-#include "Server.hpp"
+#include "../inc/Channel.hpp"
+#include "../inc/Client.hpp"
+#include "../inc/Server.hpp"
 
 Channel::Channel()
 {

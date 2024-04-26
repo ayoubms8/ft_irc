@@ -1,5 +1,5 @@
-#include "Server.hpp"
-#include "Channel.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/Channel.hpp"
 
 Client	&get_client_by_fd(std::deque<Client> &clients, int fd)
 {
@@ -88,6 +88,7 @@ void	Server::user(int fd, std::string *cmd)
 
 void	Server::quit(int fd, std::string *cmd)
 {
+	(void)cmd;
 	Client &cli = get_client_by_fd(Clients, fd);
 	Server::sendresponse(001, cli.get_nickname(), fd, " :Goodbye\n");
 	for (size_t i = 0; i < Clients.size(); i++)

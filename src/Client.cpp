@@ -1,6 +1,6 @@
-#include "Client.hpp"
-#include "Server.hpp"
-#include "Channel.hpp"
+#include "../inc/Client.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/Channel.hpp"
 
 Client::Client() : is_auth(false), has_nick(false), has_user(false)
 {
@@ -88,7 +88,6 @@ void Client::set_has_pass(bool has_pass)
 // 	this->channels.push_back(channel);
 // 	Server::sendresponse(331, this->nickname, this->fd, " :Channel joined\n");
 // }
-
 // void Client::leave_channel(std::string channel_name)
 // {
 // 	for (std::vector<Channel*>::iterator it = this->channels.begin(); it != this->channels.end(); it++)

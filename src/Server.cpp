@@ -1,5 +1,5 @@
-#include "Server.hpp"
-#include "Channel.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/Channel.hpp"
 #include <sstream>
 
 bool Server::Signal = false;
@@ -162,7 +162,7 @@ void Server::sendresponse(int code, std::string clientname, int fd, std::string 
 void	Server::execute(int fd, std::string *cmd)
 {
 	// kick join part privmsg topic mode user nick pass quit invite
-	int i = -1;
+	size_t i = -1;
 	while (++i < Clients.size())
 		if (Clients[i].getfd() == fd)
 			break ;
