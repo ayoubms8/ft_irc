@@ -266,5 +266,131 @@ void	Server::invite(int fd, std::string *cmd, int i)
 
 void	Server::mode(int fd, std::string *cmd, int i)
 {
-	
+	if (cmd[1].empty() || cmd[1][0] != '#')
+	{
+		Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
+		return;
+	}
+	for (size_t j = 0; j < Channels.size(); j++)
+	{
+		if (Channels[j].get_name() == cmd[1]) // if channel exists
+		{
+			if (!is_in_channel(Clients[i], Channels[j]))
+			{
+				Server::senderror(442, Clients[i].get_nickname(), fd, " :You're not on that channel\n");
+				return;
+			}
+			if (cmd[2].empty())
+			{
+				std::stringstream ss;
+				ss << ":localhost MODE " << cmd[1] << " ";
+				for (std::map<char, bool>::iterator it = Channels[j].get_modes().begin(); it != Channels[j].get_modes().end(); it++)
+				{
+					if ((*it).second == true)
+						ss << (*it).first;
+				}
+				ss << "\n";
+				std::string resp = ss.str();
+				if(send(fd, resp.c_str(), resp.size(),0) == -1)
+					std::cerr << "send() faild" << std::endl;
+				return;
+			}
+			if (cmd[2][0] == '+')
+			{
+				for (size_t k = 1; k < cmd[2].size(); k++)
+				{
+					if (Channels[j].get_clients()[&Clients[i]] == false && (cmd[2][k] == 'o' || cmd[2][k] == 'l' || cmd[2][k] == 'k'))
+					{
+						Server::senderror(482, Clients[i].get_nickname(), fd, " :You're not channel operator\n");
+						return;
+					}
+					if (cmd[2][k] == 'o')
+					{
+						if (cmd[3].empty())
+						{
+							Server::senderror(461, Clients[i].get_nickname(), fd, " :Not enough parameters\n");
+							return;
+						}
+						for (size_t l = 0; l < Clients.size(); l++)
+						{
+							if (Clients[l].get_nickname() == cmd[3])
+							{
+								Channels[j].set_operator(&Clients[l]);
+								return;
+							}
+						}
+						Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\n");
+						return;
+					}
+					else if (cmd[2][k] == 't')
+					{
+						Channels[j].set_mode('t', true);
+					}
+					else if (cmd[2][k] == 'i')
+					{
+						Channels[j].set_mode('i', true);
+					}
+					else if (cmd[2][k] == 'l')
+					{
+						if (cmd[3].empty())
+						{
+							Server::senderror(461, Clients[i].get_nickname(), fd, " :Not enough parameters\n");
+							return;
+						}
+						Channels[j].set_mode('l', true);
+						Channels[j].set_limit(std::stoi(cmd[3]));
+					}
+					else if (cmd[2][k] == 'k')
+					{
+						if (cmd[3].empty())
+						{
+							Server::senderror(461, Clients[i].get_nickname(), fd, " :Not enough parameters\n");
+							return;
+						}
+						Channels[j].set_mode('k', true);
+						Channels[j].set_key(cmd[3]);
+					}
+				}
+			}
+			else if (cmd[2][0] == '-')
+			{
+				for (size_t k = 1; k < cmd[2].size(); k++)
+				{
+					if (cmd[2][k] == 'o')
+					{
+						for (size_t l = 0; l < Clients.size(); l++)
+						{
+							if (Clients[l].get_nickname() == cmd[3])
+							{
+								Channels[j].remove_operator(&Clients[l]);
+								return;
+							}
+						}
+						Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\n");
+						return;
+					}
+					else if (cmd[2][k] == 't')
+					{
+						Channels[j].set_mode('t', false);
+					}
+					else if (cmd[2][k] == 'i')
+					{
+						Channels[j].set_mode('i', false);
+					}
+					else if (cmd[2][k] == 'l')
+					{
+						Channels[j].set_mode('l', false);
+						Channels[j].set_limit(-1);
+					}
+					else if (cmd[2][k] == 'k')
+					{
+						Channels[j].set_mode('k', false);
+						Channels[j].set_key("");
+					}//to complete later
+				}
+			}
+			return;
+		}
+	}
+	Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
 }

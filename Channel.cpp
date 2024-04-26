@@ -63,6 +63,11 @@ void Channel::set_modes(std::map<char, bool> modes)
 	this->modes = modes;
 }
 
+void Channel::set_mode(char mode, bool value)
+{
+	this->modes[mode] = value;
+}
+
 void Channel::set_limit(int limit)
 {
 	this->limit = limit;

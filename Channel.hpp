@@ -24,6 +24,7 @@ public:
 	void set_operator(Client *cli);
 	void set_topic(std::string topic);
 	void set_modes(std::map<char, bool> modes);
+	void set_mode(char mode, bool value);
 	void set_limit(int limit);
 	void add_client(Client *cli);
 	void remove_client(Client *cli);
