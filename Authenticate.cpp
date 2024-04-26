@@ -50,13 +50,13 @@ void	Server::nick(int fd, std::string *cmd)
 		cli.set_nickname(cmd[1]);
 	else
 	{
-		if (!cli.get_auth())
-			Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
 		cli.set_has_nick(true);
 		cli.set_nickname(cmd[1]);
 		if (cli.get_has_pass() == false || cli.get_has_user() == false)
 			return;
 		cli.set_auth(true);
+		if (cli.get_auth())
+			Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
 	}
 }
 
@@ -94,7 +94,7 @@ void	Server::quit(int fd, std::string *cmd)
 	{
 		if (Clients[i].getfd() == fd)
 		{
-			Clients[i].leave_all_channels();
+			//Clients[i].leave_all_channels();
 			Clients[i].reset();
 			Clients.erase(Clients.begin() + i);
 			break;

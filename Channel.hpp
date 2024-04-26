@@ -29,8 +29,8 @@ public:
 	void add_client(Client *cli);
 	void remove_client(Client *cli);
 	void remove_operator(Client *cli);
-	void add_invite(std::string invite);
-	void remove_invite(std::string invite);
+	void add_invite(std::string client_name);
+	void remove_invite(std::string client_name);
 	bool get_has_key() const;
 	int get_limit() const;
 	std::string get_key() const;

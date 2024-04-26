@@ -40,7 +40,7 @@ public:
 	void	user(int fd, std::string *cmd);
 	void	quit(int fd, std::string *cmd);
 	void	join(int fd, std::string *cmd, int i);
-	void	invite_only_join(int fd, std::string *cmd, int i, int j);
+	void	invite_only_join(int fd, std::string *cmd, Client &cli, Channel &channel);
 	void	part(int fd, std::string *cmd, int i);
 	void	privmsg(int fd, std::string *cmd, int i);
 	void	topic(int fd, std::string *cmd, int i);

@@ -246,7 +246,7 @@ void	Server::rmclient(int fd)
 	{
 		if (Clients[i].getfd() == fd)
 		{
-			Clients[i].leave_all_channels();
+			//Clients[i].leave_all_channels();
 			Clients[i].reset();
 			Clients.erase(Clients.begin() + i);
 			break;

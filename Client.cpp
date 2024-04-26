@@ -20,7 +20,7 @@ void	Client::reset()
 	this->username.clear();
 	this->realname.clear();
 	this->nickname.clear();
-	this->channels.clear();
+	//this->channels.clear();
 }
 
 Client::Client(int fd, struct sockaddr_in addr, socklen_t addr_len) : is_auth(false), has_nick(false), has_user(false)
@@ -60,48 +60,48 @@ void Client::set_has_pass(bool has_pass)
 	this->has_pass = has_pass;
 }
 
-std::vector<Channel*> Client::get_channels() const
-{
-	return this->channels;
-}
+// std::vector<Channel*> Client::get_channels() const
+// {
+// 	return this->channels;
+// }
 
-void Client::leave_all_channels()
-{
-	for (size_t i = 0; i < this->channels.size(); i++)
-	{
-		this->channels[i]->remove_client(this);
-	}
-	this->channels.clear();
-}
+// void Client::leave_all_channels()
+// {
+// 	for (size_t i = 0; i < this->channels.size(); i++)
+// 	{
+// 		this->channels[i]->remove_client(this);
+// 	}
+// 	this->channels.clear();
+// }
 
-void Client::join_channel(Channel *channel)
-{
-	for (size_t i = 0; i < this->channels.size(); i++)
-	{
-		if (this->channels[i]->get_name() == channel->get_name()) // if already in channel
-		{
-			Server::senderror(443, this->nickname, this->fd, " :is already in channel\n");
-			return;
-		}
-	}
-	channel->add_client(this);
-	this->channels.push_back(channel);
-	Server::sendresponse(331, this->nickname, this->fd, " :Channel joined\n");
-}
+// void Client::join_channel(Channel *channel)
+// {
+// 	for (size_t i = 0; i < this->channels.size(); i++)
+// 	{
+// 		if (this->channels[i]->get_name() == channel->get_name()) // if already in channel
+// 		{
+// 			Server::senderror(443, this->nickname, this->fd, " :is already in channel\n");
+// 			return;
+// 		}
+// 	}
+// 	channel->add_client(this);
+// 	this->channels.push_back(channel);
+// 	Server::sendresponse(331, this->nickname, this->fd, " :Channel joined\n");
+// }
 
-void Client::leave_channel(std::string channel_name)
-{
-	for (std::vector<Channel*>::iterator it = this->channels.begin(); it != this->channels.end(); it++)
-	{
-		if ((*it)->get_name() == channel_name)
-		{
-			this->channels.erase(it);
-			Server::sendresponse(331, this->nickname, this->fd, " :Channel left\n");
-			return;
-		}
-	}
-	Server::senderror(442, this->nickname, this->fd, " :You're not on that channel\n");
-}
+// void Client::leave_channel(std::string channel_name)
+// {
+// 	for (std::vector<Channel*>::iterator it = this->channels.begin(); it != this->channels.end(); it++)
+// 	{
+// 		if ((*it)->get_name() == channel_name)
+// 		{
+// 			this->channels.erase(it);
+// 			Server::sendresponse(331, this->nickname, this->fd, " :Channel left\n");
+// 			return;
+// 		}
+// 	}
+// 	Server::senderror(442, this->nickname, this->fd, " :You're not on that channel\n");
+// }
 
 void Client::set_auth(bool auth)
 {

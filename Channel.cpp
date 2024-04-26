@@ -1,5 +1,6 @@
 #include "Channel.hpp"
 #include "Client.hpp"
+#include "Server.hpp"
 
 Channel::Channel()
 {
@@ -76,6 +77,13 @@ void Channel::set_limit(int limit)
 void Channel::add_client(Client *cli)
 {
 	this->clients[cli] = false;
+	for (std::map<Client*, bool>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+	{
+		if ((*it).first->getfd() != cli->getfd())
+			Server::sendresponse(332, (*it).first->get_nickname(), (*it).first->getfd(), " :" + cli->get_nickname() + " has joined the channel\n");
+		else
+			Server::sendresponse(332, (*it).first->get_nickname(), (*it).first->getfd(), " :You have joined the channel\n");
+	}
 }
 
 void Channel::remove_client(Client *cli)
@@ -85,12 +93,15 @@ void Channel::remove_client(Client *cli)
 	{
 		if ((*it).first->getfd() == cli->getfd())
 		{
+			Server::sendresponse(332, (*it).first->get_nickname(), (*it).first->getfd(), " :You have left the channel\n");
 			this->clients.erase(it);
-			std::cout << "Client removed from channel\n";
-			break;
+			for (std::map<Client*, bool>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+				Server::sendresponse(332, (*it).first->get_nickname(), (*it).first->getfd(), " :" + cli->get_nickname() + " has left the channel\n");
+			return;
 		}
 		it++;
 	}
+	Server::senderror(442, cli->get_nickname(), cli->getfd(), " :is not on channel\n");
 }
 
 void Channel::remove_operator(Client *cli)
@@ -147,17 +158,17 @@ std::vector<std::string> Channel::get_invite_list() const
 	return this->invite_list;
 }
 
-void Channel::add_invite(std::string invite)
+void Channel::add_invite(std::string client_name)
 {
-	this->invite_list.push_back(invite);
+	this->invite_list.push_back(client_name);
 }
 
-void Channel::remove_invite(std::string invite)
+void Channel::remove_invite(std::string client_name)
 {
 	std::vector<std::string>::iterator it = this->invite_list.begin();
 	while (it != this->invite_list.end())
 	{
-		if (*it == invite)
+		if (*it == client_name)
 		{
 			this->invite_list.erase(it);
 			break;

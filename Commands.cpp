@@ -15,23 +15,18 @@ bool	is_in_channel(Client &cli, Channel &channel)
 }
 
 
-void	Server::invite_only_join(int fd, std::string *cmd, int i, int j)
+void	Server::invite_only_join(int fd, std::string *cmd, Client &cli, Channel &channel)
 {
-	if (cmd[2].empty())
+	for (size_t k = 0; k < channel.get_invite_list().size(); k++)
 	{
-		Server::senderror(473, Clients[i].get_nickname(), fd, " :Invite only channel\n");
-		return;
-	}
-	for (size_t k = 0; k < Channels[j].get_invite_list().size(); k++)
-	{
-		if (Channels[j].get_invite_list()[k] == Clients[i].get_nickname())
+		if (channel.get_invite_list()[k] == cli.get_nickname())
 		{
-			Clients[i].join_channel(&Channels[j]);
-			Channels[j].remove_invite(Clients[i].get_nickname());
+			channel.add_client(&cli);
+			channel.remove_invite(cli.get_nickname());
 			return;
 		}
 	}
-	Server::senderror(473, Clients[i].get_nickname(), fd, " :Invite only channel\n");
+	Server::senderror(473, cli.get_nickname(), fd, " :Invite only channel\n");
 }
 
 void	Server::join(int fd, std::string *cmd, int i)
@@ -45,14 +40,20 @@ void	Server::join(int fd, std::string *cmd, int i)
 	{
 		if (Channels[j].get_name() == cmd[1]) // if channel exists
 		{
+			//if client is already in channel
+			if (is_in_channel(Clients[i], Channels[j]))
+			{
+				Server::senderror(443, Clients[i].get_nickname(), fd, " :is already on channel\n");
+				return;
+			}
 			//if invite only
 			if (Channels[j].get_modes()['i'] == true)
 			{
-				invite_only_join(fd, cmd, i, j);
+				invite_only_join(fd, cmd, Clients[i], Channels[j]);
 				return;
 			}
 			//if key is set
-			if (Channels[j].get_key() != "")
+			if (Channels[j].get_modes()['k'] == true)
 			{
 				if (cmd[2].empty() || cmd[2] != Channels[j].get_key())
 				{
@@ -60,12 +61,12 @@ void	Server::join(int fd, std::string *cmd, int i)
 					return;
 				}
 			}
-			Clients[i].join_channel(&Channels[j]);
+			Channels[j].add_client(&Clients[i]);
 			return;
 		}
 	}
 	Channel new_channel(cmd[1]);
-	Clients[i].join_channel(&new_channel);
+	new_channel.add_client(&Clients[i]);
 	new_channel.set_operator(&Clients[i]);
 	Channels.push_back(new_channel);
 	return;
@@ -83,7 +84,7 @@ void	Server::part(int fd, std::string *cmd, int i)
 	{
 		if (Channels[j].get_name() == cmd[1]) // if channel exists
 		{
-			Clients[i].leave_channel(Channels[j].get_name());
+			//Clients[i].leave_channel(Channels[j].get_name());
 			Channels[j].remove_client(&Clients[i]);
 			if (Channels[j].get_clients().empty())
 				Channels.erase(Channels.begin() + j);
@@ -125,6 +126,7 @@ void	Server::privmsg(int fd, std::string *cmd, int i)
 				return;
 			}
 		}
+		Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
 	}
 	for (size_t j = 0; j < Clients.size(); j++) // send message to specific client
 	{
@@ -211,12 +213,11 @@ void	Server::kick(int fd, std::string *cmd, int i)
 					std::string resp = ss.str();
 					if(send((*it).first->getfd(), resp.c_str(), resp.size(),0) == -1)
 						std::cerr << "send() faild" << std::endl;
-					(*it).first->get_channels().erase((*it).first->get_channels().begin() + j); //remove channel from channel list of client
 					Channels[j].remove_client((*it).first);//remove client from channel
 					return;
 				}
-				Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\n");
 			}
+			Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\n");
 			return;
 		}
 	}
@@ -317,6 +318,7 @@ void	Server::mode(int fd, std::string *cmd, int i)
 							if (Clients[l].get_nickname() == cmd[3])
 							{
 								Channels[j].set_operator(&Clients[l]);
+								Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +o " + cmd[3] + "\n");
 								return;
 							}
 						}
@@ -326,10 +328,12 @@ void	Server::mode(int fd, std::string *cmd, int i)
 					else if (cmd[2][k] == 't')
 					{
 						Channels[j].set_mode('t', true);
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +t\n");
 					}
 					else if (cmd[2][k] == 'i')
 					{
 						Channels[j].set_mode('i', true);
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +i\n");
 					}
 					else if (cmd[2][k] == 'l')
 					{
@@ -340,6 +344,7 @@ void	Server::mode(int fd, std::string *cmd, int i)
 						}
 						Channels[j].set_mode('l', true);
 						Channels[j].set_limit(std::stoi(cmd[3]));
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +l " + cmd[3] + "\n");
 					}
 					else if (cmd[2][k] == 'k')
 					{
@@ -350,6 +355,7 @@ void	Server::mode(int fd, std::string *cmd, int i)
 						}
 						Channels[j].set_mode('k', true);
 						Channels[j].set_key(cmd[3]);
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +k " + cmd[3] + "\n");
 					}
 				}
 			}
@@ -364,6 +370,7 @@ void	Server::mode(int fd, std::string *cmd, int i)
 							if (Clients[l].get_nickname() == cmd[3])
 							{
 								Channels[j].remove_operator(&Clients[l]);
+								Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -o " + cmd[3] + "\n");
 								return;
 							}
 						}
@@ -373,20 +380,24 @@ void	Server::mode(int fd, std::string *cmd, int i)
 					else if (cmd[2][k] == 't')
 					{
 						Channels[j].set_mode('t', false);
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -t\n");
 					}
 					else if (cmd[2][k] == 'i')
 					{
 						Channels[j].set_mode('i', false);
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -i\n");
 					}
 					else if (cmd[2][k] == 'l')
 					{
 						Channels[j].set_mode('l', false);
 						Channels[j].set_limit(-1);
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -l\n");
 					}
 					else if (cmd[2][k] == 'k')
 					{
 						Channels[j].set_mode('k', false);
 						Channels[j].set_key("");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -k\n");
 					}//to complete later
 				}
 			}
