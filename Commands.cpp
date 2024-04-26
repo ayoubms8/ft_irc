@@ -266,6 +266,7 @@ void	Server::invite(int fd, std::string *cmd, int i)
 
 void	Server::mode(int fd, std::string *cmd, int i)
 {
+	std::map<char, bool> modes = Channels[i].get_modes();
 	if (cmd[1].empty() || cmd[1][0] != '#')
 	{
 		Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
@@ -284,7 +285,7 @@ void	Server::mode(int fd, std::string *cmd, int i)
 			{
 				std::stringstream ss;
 				ss << ":localhost MODE " << cmd[1] << " ";
-				for (std::map<char, bool>::iterator it = Channels[j].get_modes().begin(); it != Channels[j].get_modes().end(); it++)
+				for (std::map<char, bool>::iterator it = modes.begin(); it != modes.end(); it++)
 				{
 					if ((*it).second == true)
 						ss << (*it).first;
