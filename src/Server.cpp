@@ -3,9 +3,15 @@
 #include <sstream>
 
 bool Server::Signal = false;
+std::string Server::creationdate;
 
 Server::Server()
 {
+	std::time_t now = std::time(0);
+    std::tm* localtm = std::localtime(&now);
+    char buffer[80];
+    std::strftime(buffer, 80, "%a %b %d %Y", localtm);
+    Server::creationdate = buffer;
 }
 
 Server::~Server()
@@ -100,13 +106,19 @@ void	Server::AcceptNewClient()
 	Client new_client(new_pol_fd.fd, addr, addr_len);
 	this->Clients.push_back(new_client);
 	std::cout << "New client connected\n";
-	Server::sendresponse(001, "localhost ", new_pol_fd.fd, "Welcome to the server\n");
+	Server::sendresponse(001, "127.0.0.1 ", new_pol_fd.fd, "Welcome to the server\n");
 }
 
 int	count_args(std::string str)
 {
 	int args = 0;
 	std::string::size_type pos = 0;
+	std::string::size_type last_arg = 0;
+	if ((last_arg = str.find(":")) != std::string::npos)
+	{
+		args++;
+		str.erase(last_arg);
+	}
 	while ((pos = str.find(" ")) != std::string::npos)
 	{
 		while (str[pos] == ' ')
@@ -117,33 +129,52 @@ int	count_args(std::string str)
 	return (args + 1);
 }
 
-std::string	*parse_cmd(std::string str)
+std::vector<std::string> parse_cmd(std::string str)
 {
-	str.erase(std::remove(str.begin(), str.end(), '\n'), str.end()); // complete later
-	int args_num = count_args(str);
-	std::string *cmd = new std::string[args_num + 1];
-	std::string tmp;
-	std::string::size_type pos = 0;
-	int i = 0;
+    std::vector<std::string> cmd;
+    std::string::size_type pos = 0;
 
-	while ((pos = str.find(" ")) != std::string::npos)
-	{
+    // Remove trailing "\r\n"
+    if ((pos = str.find("\r\n")) != std::string::npos)
+    {
+        str.erase(pos, 2);
+    }
 
-		tmp = str.substr(0, pos);
-		while (str[pos] == ' ')
-			pos++;
-		str.erase(0, pos);
-		cmd[i] = tmp;
-		i++;
-	}
-	cmd[i] = str;
-	return (cmd);
+    // Extract the prefix if it exists
+    if (str[0] == ':')
+    {
+        pos = str.find(" ");
+        cmd.push_back(str.substr(1, pos - 1));
+        str.erase(0, pos + 1);
+    }
+
+    // Extract the command and parameters
+    while ((pos = str.find(" ")) != std::string::npos)
+    {
+        if (str[0] == ':') // The rest of the line is a trailing parameter
+        {
+            cmd.push_back(str.substr(1));
+            break;
+        }
+        else
+        {
+            cmd.push_back(str.substr(0, pos));
+            str.erase(0, pos + 1);
+        }
+    }
+
+    if (!str.empty())
+    {
+        cmd.push_back(str);
+    }
+
+    return cmd;
 }
 
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << msg;
+	ss << ":127.0.0.1 " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
@@ -152,14 +183,20 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 void Server::sendresponse(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":localhost " << code << " " << clientname << msg;
+	ss << ":127.0.0.1 " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
 }
 
+void Server::sendmsg(int fd, std::string msg)
+{
+	if(send(fd, msg.c_str(), msg.size(),0) == -1)
+		std::cerr << "send() faild" << std::endl;
+}
 
-void	Server::execute(int fd, std::string *cmd)
+
+void	Server::execute(int fd, std::vector<std::string> cmd)
 {
 	// kick join part privmsg topic mode user nick pass quit invite
 	size_t i = -1;
@@ -220,9 +257,8 @@ void	Server::ReceiveNewData(int fd)
 	{
 		buffer[ret] = '\0';
 		std::string str(buffer);
-		std::string *cmd = parse_cmd(str);
-		this->execute(fd, cmd);
-		delete [] cmd;
+		std::vector<std::string> cmd = parse_cmd(str);
+		this->execute(fd, cmd);	
 	}
 }
 

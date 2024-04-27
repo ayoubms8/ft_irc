@@ -1,3 +1,4 @@
+
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
 #include <sstream>
@@ -15,7 +16,7 @@ bool	is_in_channel(Client &cli, Channel &channel)
 }
 
 
-void	Server::invite_only_join(int fd, std::string *cmd, Client &cli, Channel &channel)
+void	Server::invite_only_join(int fd, std::vector<std::string> cmd, Client &cli, Channel &channel)
 {
 	(void)cmd;
 	for (size_t k = 0; k < channel.get_invite_list().size(); k++)
@@ -30,7 +31,7 @@ void	Server::invite_only_join(int fd, std::string *cmd, Client &cli, Channel &ch
 	Server::senderror(473, cli.get_nickname(), fd, " :Invite only channel\n");
 }
 
-void	Server::join(int fd, std::string *cmd, int i)
+void	Server::join(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[1][0] != '#' || cmd[1].size() < 2)//complete parsing
 	{
@@ -73,7 +74,7 @@ void	Server::join(int fd, std::string *cmd, int i)
 	return;
 }
 
-void	Server::part(int fd, std::string *cmd, int i)
+void	Server::part(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[1][0] != '#' || cmd[1].size() < 2)
 	{
@@ -95,7 +96,7 @@ void	Server::part(int fd, std::string *cmd, int i)
 	Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
 }
 
-void	Server::privmsg(int fd, std::string *cmd, int i)
+void	Server::privmsg(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[2].empty())
 	{
@@ -118,7 +119,7 @@ void	Server::privmsg(int fd, std::string *cmd, int i)
 					if (is_in_channel(Clients[k], Channels[j]))
 					{
 						std::stringstream ss;
-						ss << ":localhost PRIVMSG " << cmd[1] << " :" << cmd[2] << "\n";
+						ss << ":127.0.0.1 PRIVMSG " << cmd[1] << " :" << cmd[2] << "\n";
 						std::string resp = ss.str();
 						if(send(Clients[k].getfd(), resp.c_str(), resp.size(),0) == -1)
 							std::cerr << "send() faild" << std::endl;
@@ -134,7 +135,7 @@ void	Server::privmsg(int fd, std::string *cmd, int i)
 		if (Clients[j].get_nickname() == cmd[1]) // if client exists
 		{
 			std::stringstream ss;
-			ss << ":localhost PRIVMSG " << cmd[1] << " :" << cmd[2] << "\n";
+			ss << ":127.0.0.1 PRIVMSG " << cmd[1] << " :" << cmd[2] << "\n";
 			std::string resp = ss.str();
 			if(send(Clients[j].getfd(), resp.c_str(), resp.size(),0) == -1)
 				std::cerr << "send() faild" << std::endl;
@@ -144,7 +145,7 @@ void	Server::privmsg(int fd, std::string *cmd, int i)
 	Server::senderror(401, Clients[i].get_nickname(), fd, " :No such nick/channel\n");
 }
 
-void	Server::topic(int fd, std::string *cmd, int i)
+void	Server::topic(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[1][0] != '#')
 	{
@@ -179,7 +180,7 @@ void	Server::topic(int fd, std::string *cmd, int i)
 	Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
 }
 
-void	Server::kick(int fd, std::string *cmd, int i)
+void	Server::kick(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[2].empty())
 	{
@@ -206,7 +207,7 @@ void	Server::kick(int fd, std::string *cmd, int i)
 				if ((*it).first->get_nickname() == cmd[2]) // if client exists
 				{
 					std::stringstream ss;
-					ss << ":localhost KICK " << cmd[1] << " " << cmd[2];
+					ss << ":127.0.0.1 KICK " << cmd[1] << " " << cmd[2];
 					if (cmd[3].empty())
 						ss << " :" << Clients[i].get_nickname() << "\n";
 					else
@@ -225,7 +226,7 @@ void	Server::kick(int fd, std::string *cmd, int i)
 	Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
 }
 
-void	Server::invite(int fd, std::string *cmd, int i)
+void	Server::invite(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[2].empty())
 	{
@@ -252,7 +253,7 @@ void	Server::invite(int fd, std::string *cmd, int i)
 				{
 					Channels[j].add_invite(Clients[k].get_nickname());
 					std::stringstream ss;
-					ss << ":localhost INVITE " << cmd[1] << " :" << cmd[2] << "\n";
+					ss << ":127.0.0.1 INVITE " << cmd[1] << " :" << cmd[2] << "\n";
 					std::string resp = ss.str();
 					if(send(Clients[k].getfd(), resp.c_str(), resp.size(),0) == -1)
 						std::cerr << "send() faild" << std::endl;
@@ -266,7 +267,7 @@ void	Server::invite(int fd, std::string *cmd, int i)
 	Server::senderror(403, Clients[i].get_nickname(), fd, " :No such channel\n");
 }
 
-void	Server::mode(int fd, std::string *cmd, int i)
+void	Server::mode(int fd, std::vector<std::string> cmd, int i)
 {
 	std::map<char, bool> modes = Channels[i].get_modes();
 	if (cmd[1].empty() || cmd[1][0] != '#')
@@ -286,7 +287,7 @@ void	Server::mode(int fd, std::string *cmd, int i)
 			if (cmd[2].empty())
 			{
 				std::stringstream ss;
-				ss << ":localhost MODE " << cmd[1] << " ";
+				ss << ":127.0.0.1 MODE " << cmd[1] << " ";
 				for (std::map<char, bool>::iterator it = modes.begin(); it != modes.end(); it++)
 				{
 					if ((*it).second == true)

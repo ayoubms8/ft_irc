@@ -12,7 +12,6 @@ Client::~Client()
 
 void	Client::reset()
 {
-	std::cout << "resetting client\n";
 	this->is_auth = false;
 	this->has_nick = false;
 	this->has_user = false;

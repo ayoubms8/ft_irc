@@ -1,6 +1,23 @@
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
 
+void	Server::sendWelcomeMessages(Client &cli) {
+    std::string nick = cli.get_nickname();
+    std::string user = cli.get_username();
+    std::string host = "127.0.0.1";
+    std::string servername = "myserver";
+    std::string version = "1.0.0";
+    std::string userModes = "";
+    std::string channelModes = "iklot";
+    std::string featureList = "CHANTYPES=#& PREFIX=(ov)@+ CHANMODES=o,k,l,t,i";
+
+    Server::sendresponse(001, nick, cli.getfd(), " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\n");
+    Server::sendresponse(002, nick, cli.getfd(), " :Your host is " + servername + ", running version " + version + "\n");
+    Server::sendresponse(003, nick, cli.getfd(), " :This server was created " + creationdate + "\n");
+    Server::sendresponse(004, nick, cli.getfd(), " :" + servername + " " + version + " " + userModes + " " + channelModes + "\n");
+    Server::sendresponse(005, nick, cli.getfd(), " :" + servername + " " + featureList + " :are supported by this server" + "\r\n");
+}
+
 Client	&get_client_by_fd(std::deque<Client> &clients, int fd)
 {
 	for (size_t i = 0; i < clients.size(); i++)
@@ -11,7 +28,7 @@ Client	&get_client_by_fd(std::deque<Client> &clients, int fd)
 	throw std::runtime_error("Client not found");
 }
 
-void	Server::authenticate(int fd, std::string *cmd)
+void	Server::authenticate(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (cmd[1].empty() || cmd[1] != this->password)
@@ -25,11 +42,11 @@ void	Server::authenticate(int fd, std::string *cmd)
 		if (cli.get_has_nick() == false || cli.get_has_user() == false)
 			return;
 		cli.set_auth(true);
-		Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
+		Server::sendWelcomeMessages(cli);
 	}
 }
 
-void	Server::nick(int fd, std::string *cmd)
+void	Server::nick(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	size_t j;
@@ -55,12 +72,11 @@ void	Server::nick(int fd, std::string *cmd)
 		if (cli.get_has_pass() == false || cli.get_has_user() == false)
 			return;
 		cli.set_auth(true);
-		if (cli.get_auth())
-			Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
+		Server::sendWelcomeMessages(cli);
 	}
 }
 
-void	Server::user(int fd, std::string *cmd)
+void	Server::user(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (cli.get_has_user() == true)
@@ -82,11 +98,11 @@ void	Server::user(int fd, std::string *cmd)
 		if (cli.get_has_nick() == false || cli.get_has_pass() == false)
 			return;
 		cli.set_auth(true);
-		Server::sendresponse(001, cli.get_nickname(), cli.getfd(), " :Welcome to the Internet Relay Network\n");
+		Server::sendWelcomeMessages(cli);
 	}
 }
 
-void	Server::quit(int fd, std::string *cmd)
+void	Server::quit(int fd, std::vector<std::string> cmd)
 {
 	(void)cmd;
 	Client &cli = get_client_by_fd(Clients, fd);
