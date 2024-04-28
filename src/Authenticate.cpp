@@ -49,6 +49,11 @@ void	Server::authenticate(int fd, std::vector<std::string> cmd)
 void	Server::nick(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
+	if (!cli.get_has_pass())
+	{
+		Server::senderror(451, cli.get_nickname(), cli.getfd(), " :Enter password first\n");
+		return;
+	}
 	size_t j;
 	if (cmd[1].empty())
 	{
@@ -69,7 +74,7 @@ void	Server::nick(int fd, std::vector<std::string> cmd)
 	{
 		cli.set_has_nick(true);
 		cli.set_nickname(cmd[1]);
-		if (cli.get_has_pass() == false || cli.get_has_user() == false)
+		if (!cli.get_has_user())
 			return;
 		cli.set_auth(true);
 		Server::sendWelcomeMessages(cli);
@@ -79,7 +84,12 @@ void	Server::nick(int fd, std::vector<std::string> cmd)
 void	Server::user(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
-	if (cli.get_has_user() == true)
+	if (!cli.get_has_pass())
+	{
+		Server::senderror(451, cli.get_nickname(), cli.getfd(), " :Enter password first\n");
+		return;
+	}
+	if (cli.get_has_user())
 	{
 		Server::senderror(462, cli.get_nickname(), cli.getfd(), " :You may not reregister\n");
 		return;
@@ -95,7 +105,7 @@ void	Server::user(int fd, std::vector<std::string> cmd)
 		cli.set_has_user(true);
 		cli.set_username(cmd[1]);
 		cli.set_realname(cmd[4]);
-		if (cli.get_has_nick() == false || cli.get_has_pass() == false)
+		if (!cli.get_has_nick())
 			return;
 		cli.set_auth(true);
 		Server::sendWelcomeMessages(cli);
