@@ -39,10 +39,12 @@ public:
 	Server(const Server &copy);
 	Server &operator=(const Server &copy);
 
-	void	authenticate(int fd, std::vector<std::string> cmd);
-	void	nick(int fd, std::vector<std::string> cmd);
-	void	user(int fd, std::vector<std::string> cmd);
-	void	quit(int fd, std::vector<std::string> cmd);
+	bool	authentication(int fildD, std::vector<std::string> command);
+	bool	isCompared(std::string const &str1, std::string const &str2);
+	void	ft_pass(int fd, std::vector<std::string> cmd);
+	void	ft_nick(int fd, std::vector<std::string> cmd);
+	void	ft_user(int fd, std::vector<std::string> cmd);
+	void	ft_quit(int fd, std::vector<std::string> cmd);
 	void	join(int fd, std::vector<std::string> cmd, int i);
 	void	invite_only_join(int fd, std::vector<std::string> cmd, Client &cli, Channel &channel);
 	void	part(int fd, std::vector<std::string> cmd, int i);
@@ -51,5 +53,6 @@ public:
 	void	mode(int fd, std::vector<std::string> cmd, int i);
 	void	kick(int fd, std::vector<std::string> cmd, int i);
 	void	invite(int fd, std::vector<std::string> cmd, int i);
+	Client	&get_client_by_fd(std::deque<Client> &clients, int fd);
 	~Server();
 };

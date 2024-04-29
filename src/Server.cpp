@@ -5,6 +5,15 @@
 bool Server::Signal = false;
 std::string Server::creationdate;
 
+Client &Server::get_client_by_fd(std::deque<Client> &clients, int fd)
+{
+	for (size_t i = 0; i < clients.size(); i++)
+	{
+		if (clients[i].getfd() == fd)
+			return clients[i];
+	}
+	throw std::runtime_error("Client not found");
+}
 Server::Server()
 {
 	std::time_t now = std::time(0);
@@ -194,44 +203,72 @@ void Server::sendmsg(int fd, std::string msg)
 	if(send(fd, msg.c_str(), msg.size(),0) == -1)
 		std::cerr << "send() faild" << std::endl;
 }
-
-
-void	Server::execute(int fd, std::vector<std::string> cmd)
+bool	Server::isCompared(std::string const &str1, std::string const &str2)
+{
+	if (str1.length() != str2.length())
+		return false;
+	for (size_t i = 0; i < str1.length(); i++)
+	{
+		if (std::toupper(str1[i]) != std::toupper(str2[i]))
+			return false;
+	}
+	return true;
+}
+bool	Server::authentication(int fildD, std::vector<std::string> command)
+{
+	//Check if the pass is the first command is passed
+	Client &cli = get_client_by_fd(Clients, fildD);
+	// if (!isCompared(command[0], "pass") && !cli.get_has_pass())
+	// 	return false;
+	//execute the authentication
+	if (isCompared(command[0], "pass"))
+		ft_pass(fildD, command);
+	
+	else if (isCompared(command[1], "nick"))
+		ft_nick(fildD, command);
+	else if (isCompared(command[1], "user"))
+		ft_user(fildD, command);
+	//Check if all authentication passed seccessfuly
+	if (cli.get_has_pass() && cli.get_has_user() && cli.get_has_nick())
+		return true;
+	return false;
+}
+void	Server::execute(int fildD, std::vector<std::string> command)
 {
 	// kick join part privmsg topic mode user nick pass quit invite
 	size_t i = -1;
 	while (++i < Clients.size())
-		if (Clients[i].getfd() == fd)
+		if (Clients[i].getfd() == fildD)
 			break ;
-	if (cmd[0] == "pass" || cmd[0] == "PASS")
-		authenticate(fd, cmd);
-	else if (cmd[0] == "nick" || cmd[0] == "NICK")
-		nick(fd, cmd);
-	else if (cmd[0] == "user" || cmd[0] == "USER")
-		user(fd, cmd);
-	else if (cmd[0] == "quit" || cmd[0] == "QUIT")
-		quit(fd, cmd);
-	else if (Clients[i].get_auth() == false)
+	if (command[0] == "pass" || command[0] == "PASS")
+		ft_pass(fildD, command);
+	else if (command[0] == "nick" || command[0] == "NICK")
+		ft_nick(fildD, command);
+	else if (command[0] == "user" || command[0] == "USER")
+		ft_user(fildD, command);
+	else if (command[0] == "quit" || command[0] == "QUIT")
+		ft_quit(fildD, command);
+	if (!Clients[i].get_auth())
 	{
 		std::cout << "Client " << i + 1 << " needs to authenticate first\n";
 		return;
 	}
-	else if (cmd[0] == "join" || cmd[0] == "JOIN")
-		join(fd, cmd, i);
-	else if (cmd[0] == "part" || cmd[0] == "PART")
-		part(fd, cmd, i);
-	else if (cmd[0] == "privmsg" || cmd[0] == "PRIVMSG")
-		privmsg(fd, cmd, i);
-	else if (cmd[0] == "topic" || cmd[0] == "TOPIC")
-		topic(fd, cmd, i);
-	else if (cmd[0] == "mode" || cmd[0] == "MODE")
-		mode(fd, cmd, i);
-	else if (cmd[0] == "kick" || cmd[0] == "KICK")
-		kick(fd, cmd, i);
-	else if (cmd[0] == "invite" || cmd[0] == "INVITE")
-		invite(fd, cmd, i);
+	else if (isCompared(command[0], "join"))
+		join(fildD, command, i);
+	else if (isCompared(command[0], "part"))
+		part(fildD, command, i);
+	else if (isCompared(command[0], "privmsg"))
+		privmsg(fildD, command, i);
+	else if (isCompared(command[0], "topic"))
+		topic(fildD, command, i);
+	else if (isCompared(command[0], "mode"))
+		mode(fildD, command, i);
+	else if (isCompared(command[0], "kick"))
+		kick(fildD, command, i);
+	else if (isCompared(command[0], "invite"))
+		invite(fildD, command, i);
 	else
-		Server::senderror(421, Clients[i].get_nickname(), fd, " " + cmd[0] + " :Unknown command\n");
+		Server::senderror(421, Clients[i].get_nickname(), fildD, " " + command[0] + " :Unknown command\n");
 }
 
 void	Server::ReceiveNewData(int fd)

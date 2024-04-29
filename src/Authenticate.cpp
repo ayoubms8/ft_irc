@@ -48,17 +48,7 @@ void Server::ch_join_message(Client *cli, Channel *channel)
 	send(cli->getfd(), msg.c_str(), msg.size(), 0);
 }
 
-Client &get_client_by_fd(std::deque<Client> &clients, int fd)
-{
-	for (size_t i = 0; i < clients.size(); i++)
-	{
-		if (clients[i].getfd() == fd)
-			return clients[i];
-	}
-	throw std::runtime_error("Client not found");
-}
-
-void Server::authenticate(int fd, std::vector<std::string> cmd)
+void Server::ft_pass(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (cmd[1].empty() || cmd[1] != this->password)
@@ -67,16 +57,10 @@ void Server::authenticate(int fd, std::vector<std::string> cmd)
 		return;
 	}
 	else
-	{
 		cli.set_has_pass(true);
-		if (cli.get_has_nick() == false || cli.get_has_user() == false)
-			return;
-		cli.set_auth(true);
-		Server::sendWelcomeMessages(cli);
-	}
 }
 
-void Server::nick(int fd, std::vector<std::string> cmd)
+void Server::ft_nick(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (!cli.get_has_pass())
@@ -106,12 +90,15 @@ void Server::nick(int fd, std::vector<std::string> cmd)
 		cli.set_nickname(cmd[1]);
 		if (!cli.get_has_user())
 			return;
-		cli.set_auth(true);
-		Server::sendWelcomeMessages(cli);
+		if (!cli.get_auth())
+		{
+			cli.set_auth(true);
+			Server::sendWelcomeMessages(cli);
+		}
 	}
 }
 
-void Server::user(int fd, std::vector<std::string> cmd)
+void Server::ft_user(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (!cli.get_has_pass())
@@ -142,7 +129,7 @@ void Server::user(int fd, std::vector<std::string> cmd)
 	}
 }
 
-void Server::quit(int fd, std::vector<std::string> cmd)
+void Server::ft_quit(int fd, std::vector<std::string> cmd)
 {
 	(void)cmd;
 	Client &cli = get_client_by_fd(Clients, fd);
