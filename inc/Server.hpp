@@ -32,6 +32,7 @@ public:
 	static void	senderror(int code, std::string clientname, int fd, std::string msg);
 	static void sendresponse(int code, std::string clientname, int fd, std::string msg);
 	static void	sendWelcomeMessages(Client &cli);
+	static void ch_join_message(Client *cli, Channel *channel);
 	static void	sendmsg(int fd, std::string msg);
 	void	show_clients();
 	Server();

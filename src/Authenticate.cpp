@@ -1,24 +1,54 @@
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
 
-void	Server::sendWelcomeMessages(Client &cli) {
-    std::string nick = cli.get_nickname();
-    std::string user = cli.get_username();
-    std::string host = "127.0.0.1";
-    std::string servername = "myserver";
-    std::string version = "1.0.0";
-    std::string userModes = "";
-    std::string channelModes = "iklot";
-    std::string featureList = "CHANTYPES=#& PREFIX=(ov)@+ CHANMODES=o,k,l,t,i";
+void Server::sendWelcomeMessages(Client &cli)
+{
+	std::string nick = cli.get_nickname();
+	std::string user = cli.get_username();
+	std::string host = "127.0.0.1";
+	std::string servername = "myserver";
+	std::string version = "1.0.0";
+	std::string userModes = "";
+	std::string channelModes = "iklot";
+	std::string featureList = "CHANTYPES=#& PREFIX=(ov)@+ CHANMODES=o,k,l,t,i";
 
-    Server::sendresponse(001, nick, cli.getfd(), " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\n");
-    Server::sendresponse(002, nick, cli.getfd(), " :Your host is " + servername + ", running version " + version + "\n");
-    Server::sendresponse(003, nick, cli.getfd(), " :This server was created " + creationdate + "\n");
-    Server::sendresponse(004, nick, cli.getfd(), " :" + servername + " " + version + " " + userModes + " " + channelModes + "\n");
-    Server::sendresponse(005, nick, cli.getfd(), " :" + servername + " " + featureList + " :are supported by this server" + "\r\n");
+	Server::sendresponse(001, nick, cli.getfd(), " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\n");
+	Server::sendresponse(002, nick, cli.getfd(), " :Your host is " + servername + ", running version " + version + "\n");
+	Server::sendresponse(003, nick, cli.getfd(), " :This server was created " + creationdate + "\n");
+	Server::sendresponse(004, nick, cli.getfd(), " :" + servername + " " + version + " " + userModes + " " + channelModes + "\n");
+	Server::sendresponse(005, nick, cli.getfd(), " :" + servername + " " + featureList + " :are supported by this server" + "\r\n");
 }
 
-Client	&get_client_by_fd(std::deque<Client> &clients, int fd)
+std::string get_users_in_channel(Channel *channel)
+{
+	std::string users;
+	std::map<Client *, bool> clients = channel->get_clients();
+	for (std::map<Client *, bool>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		users += (*it).first->get_nickname() + " ";
+	}
+	return users;
+}
+
+void Server::ch_join_message(Client *cli, Channel *channel)
+{
+	std::string nickname = cli->get_nickname();
+	std::string servername = "127.0.0.1";
+	std::string channelname = channel->get_name();
+	std::string users = get_users_in_channel(channel);
+	std::string topic = channel->get_topic();
+	std::string mode = "+nt";
+
+	std::string msg = ":" + servername + " 353 " + nickname + " = " + channelname + " :" + users + "\r\n";
+	msg += ":" + servername + " 366 " + nickname + " " + channelname + " :End of NAMES list\r\n";
+	msg += ":" + servername + " 332 " + nickname + " " + channelname + " :" + topic + "\r\n";
+	msg += ":" + servername + " 333 " + nickname + " " + channelname + " :End of TOPIC\r\n";
+	msg += ":" + servername + " 324 " + nickname + " " + channelname + " " + mode + "\r\n";
+
+	send(cli->getfd(), msg.c_str(), msg.size(), 0);
+}
+
+Client &get_client_by_fd(std::deque<Client> &clients, int fd)
 {
 	for (size_t i = 0; i < clients.size(); i++)
 	{
@@ -28,7 +58,7 @@ Client	&get_client_by_fd(std::deque<Client> &clients, int fd)
 	throw std::runtime_error("Client not found");
 }
 
-void	Server::authenticate(int fd, std::vector<std::string> cmd)
+void Server::authenticate(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (cmd[1].empty() || cmd[1] != this->password)
@@ -46,7 +76,7 @@ void	Server::authenticate(int fd, std::vector<std::string> cmd)
 	}
 }
 
-void	Server::nick(int fd, std::vector<std::string> cmd)
+void Server::nick(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (!cli.get_has_pass())
@@ -81,7 +111,7 @@ void	Server::nick(int fd, std::vector<std::string> cmd)
 	}
 }
 
-void	Server::user(int fd, std::vector<std::string> cmd)
+void Server::user(int fd, std::vector<std::string> cmd)
 {
 	Client &cli = get_client_by_fd(Clients, fd);
 	if (!cli.get_has_pass())
@@ -101,7 +131,7 @@ void	Server::user(int fd, std::vector<std::string> cmd)
 	}
 	else
 	{
-		
+
 		cli.set_has_user(true);
 		cli.set_username(cmd[1]);
 		cli.set_realname(cmd[4]);
@@ -112,7 +142,7 @@ void	Server::user(int fd, std::vector<std::string> cmd)
 	}
 }
 
-void	Server::quit(int fd, std::vector<std::string> cmd)
+void Server::quit(int fd, std::vector<std::string> cmd)
 {
 	(void)cmd;
 	Client &cli = get_client_by_fd(Clients, fd);
@@ -121,7 +151,7 @@ void	Server::quit(int fd, std::vector<std::string> cmd)
 	{
 		if (Clients[i].getfd() == fd)
 		{
-			//Clients[i].leave_all_channels();
+			// Clients[i].leave_all_channels();
 			Clients[i].reset();
 			Clients.erase(Clients.begin() + i);
 			break;

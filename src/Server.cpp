@@ -225,21 +225,13 @@ void	Server::execute(int fd, std::vector<std::string> cmd)
 	else if (cmd[0] == "topic" || cmd[0] == "TOPIC")
 		topic(fd, cmd, i);
 	else if (cmd[0] == "mode" || cmd[0] == "MODE")
-	{
 		mode(fd, cmd, i);
-	}
 	else if (cmd[0] == "kick" || cmd[0] == "KICK")
-	{
 		kick(fd, cmd, i);
-	}
 	else if (cmd[0] == "invite" || cmd[0] == "INVITE")
-	{
 		invite(fd, cmd, i);
-	}
 	else
-	{
-		std::cout << "Client " << i + 1 << " sent an invalid command\n";
-	}
+		Server::senderror(421, Clients[i].get_nickname(), fd, " " + cmd[0] + " :Unknown command\n");
 }
 
 void	Server::ReceiveNewData(int fd)

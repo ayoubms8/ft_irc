@@ -13,7 +13,6 @@ Channel::~Channel()
 Channel::Channel(std::string name) : name(name)
 {
 	this->limit = -1;
-	this->modes.insert(std::pair<char, bool>('o', false));
     this->modes.insert(std::pair<char, bool>('i', false));
     this->modes.insert(std::pair<char, bool>('t', false));
     this->modes.insert(std::pair<char, bool>('l', false));
@@ -76,14 +75,22 @@ void Channel::set_limit(int limit)
 
 void Channel::add_client(Client *cli)
 {
-	this->clients[cli] = false;
-	for (std::map<Client*, bool>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
-	{
-		if ((*it).first->getfd() != cli->getfd())
-			Server::sendresponse(332, (*it).first->get_nickname(), (*it).first->getfd(), " :" + cli->get_nickname() + " has joined the channel\n");
-		else
-			Server::sendresponse(332, (*it).first->get_nickname(), (*it).first->getfd(), " :You have joined the channel\n");
-	}
+    this->clients[cli] = false;
+    for (std::map<Client*, bool>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+    {
+        std::string join_msg;
+        if ((*it).first->getfd() != cli->getfd())
+        {
+            join_msg = ":" + cli->get_nickname() + "!" + cli->get_username() + "@127.0.0.1 JOIN " + this->name + "\r\n";
+            Server::sendmsg((*it).first->getfd(), join_msg);
+            Server::ch_join_message(cli, this);
+        }
+        else
+        {
+            join_msg = ":" + cli->get_nickname() + "!" + cli->get_username() + "@127.0.0.1 JOIN " + this->name + "\r\n";
+            Server::sendmsg((*it).first->getfd(), join_msg);
+        }
+    }
 }
 
 void Channel::remove_client(Client *cli)
