@@ -331,3 +331,14 @@ void	Server::rmclient(int fd)
 		}
 	}
 }
+
+bool	Server::is_op_in(Client &cli, Channel &channel)
+{
+	std::map<Client *, bool> *clis = channel.get_clients();
+	for (std::map<Client *, bool>::iterator it = clis->begin(); it != clis->end(); it++)
+	{
+		if ((*it).first->getfd() == cli.getfd() && (*it).second == true)
+			return (true);
+	}
+	return (false);
+}

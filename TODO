@@ -1,2 +1,3 @@
 fix mode responses
-fix part msg
+fix when last user parts channel gets deleted
+

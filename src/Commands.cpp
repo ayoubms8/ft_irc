@@ -5,9 +5,9 @@
 
 bool is_in_channel(Client &cli, Channel &channel)
 {
-	std::map<Client *, bool> clis = channel.get_clients();
+	std::map<Client *, bool> *clis = channel.get_clients();
 
-	for (std::map<Client *, bool>::iterator it = clis.begin(); it != clis.end(); it++)
+	for (std::map<Client *, bool>::iterator it = clis->begin(); it != clis->end(); it++)
 	{
 		if ((*it).first->getfd() == cli.getfd())
 			return (true);
@@ -27,14 +27,14 @@ void Server::invite_only_join(int fd, std::vector<std::string> cmd, Client &cli,
 			return;
 		}
 	}
-	Server::senderror(473, cli.get_nickname(), fd, " :Invite only channel\n");
+	Server::senderror(473, cli.get_nickname(), fd, " :Invite only channel\r\n");
 }
 
 void Server::join(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[1][0] != '#' || cmd[1].size() < 2) // complete parsing
 	{
-		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
 		return;
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
@@ -44,7 +44,7 @@ void Server::join(int fd, std::vector<std::string> cmd, int i)
 			// if client is already in channel
 			if (is_in_channel(Clients[i], Channels[j]))
 			{
-				Server::senderror(443, Clients[i].get_nickname(), fd, " :is already on channel\n");
+				Server::senderror(443, Clients[i].get_nickname(), fd, " :is already on channel\r\n");
 				return;
 			}
 			// if invite only
@@ -58,7 +58,16 @@ void Server::join(int fd, std::vector<std::string> cmd, int i)
 			{
 				if (cmd[2].empty() || cmd[2] != Channels[j].get_key())
 				{
-					Server::senderror(475, Clients[i].get_nickname(), fd, " :Bad channel key\n");
+					Server::senderror(475, Clients[i].get_nickname(), fd, " :Bad channel key\r\n");
+					return;
+				}
+			}
+			// if limit is set
+			if (Channels[j].get_modes()['l'] == true)
+			{
+				if (Channels[j].get_clients()->size() >= Channels[j].get_limit())
+				{
+					Server::senderror(471, Clients[i].get_nickname(), fd, " :Cannot join channel (+l)\r\n");
 					return;
 				}
 			}
@@ -76,7 +85,7 @@ void Server::part(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[1][0] != '#' || cmd[1].size() < 2)
 	{
-		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
 		// complete parsing
 		return;
 	}
@@ -86,24 +95,24 @@ void Server::part(int fd, std::vector<std::string> cmd, int i)
 		{
 			// Clients[i].leave_channel(Channels[j].get_name());
 			Channels[j].remove_client(&Clients[i]);
-			if (Channels[j].get_clients().empty())
+			if (Channels[j].get_clients()->empty())
 				Channels.erase(Channels.begin() + j);
 			return;
 		}
 	}
-	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
 }
 
 void Server::privmsg(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[2].empty())
 	{
-		Server::senderror(412, Clients[i].get_nickname(), fd, " :No text to send\n");
+		Server::senderror(412, Clients[i].get_nickname(), fd, " :No text to send\r\n");
 		return;
 	}
 	else if (cmd[1].empty())
 	{
-		Server::senderror(411, Clients[i].get_nickname(), fd, " :No recipient given\n");
+		Server::senderror(411, Clients[i].get_nickname(), fd, " :No recipient given\r\n");
 		return;
 	}
 	else if (cmd[1][0] == '#')
@@ -117,7 +126,7 @@ void Server::privmsg(int fd, std::vector<std::string> cmd, int i)
 					if (is_in_channel(Clients[k], Channels[j]) && Clients[k].getfd() != fd)
 					{
 						std::stringstream ss;
-						 ss << ":" << Clients[i].get_nickname() << " PRIVMSG " << cmd[1] << " :" << cmd[2] << "\n";
+						 ss << ":" << Clients[i].get_nickname() << " PRIVMSG " << cmd[1] << " :" << cmd[2] << "\r\n";
 						std::string resp = ss.str();
 						if (send(Clients[k].getfd(), resp.c_str(), resp.size(), 0) == -1)
 							std::cerr << "send() faild" << std::endl;
@@ -126,28 +135,28 @@ void Server::privmsg(int fd, std::vector<std::string> cmd, int i)
 				return;
 			}
 		}
-		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
 	}
 	for (size_t j = 0; j < Clients.size(); j++) // send message to specific client
 	{
 		if (Clients[j].get_nickname() == cmd[1]) // if client exists
 		{
 			std::stringstream ss;
-			 ss << ":" << Clients[i].get_nickname() << " PRIVMSG " << cmd[1] << " :" << cmd[2] << "\n";
+			 ss << ":" << Clients[i].get_nickname() << " PRIVMSG " << cmd[1] << " :" << cmd[2] << "\r\n";
 			std::string resp = ss.str();
 			if (send(Clients[j].getfd(), resp.c_str(), resp.size(), 0) == -1)
 				std::cerr << "send() faild" << std::endl;
 			return;
 		}
 	}
-	Server::senderror(401, Clients[i].get_nickname(), fd, " :No such nick/channel\n");
+	Server::senderror(401, Clients[i].get_nickname(), fd, " :No such nick/channel\r\n");
 }
 
 void Server::topic(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[1][0] != '#')
 	{
-		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
 		return;
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
@@ -156,20 +165,20 @@ void Server::topic(int fd, std::vector<std::string> cmd, int i)
 		{
 			if (!is_in_channel(Clients[i], Channels[j]))
 			{
-				Server::senderror(442, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not on that channel\n");
+				Server::senderror(442, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not on that channel\r\n");
 				return;
 			}
 			if (cmd[2].empty()) // if no topic is given
 			{
 				if (Channels[j].get_topic().empty())
-					Server::sendresponse(331, Clients[i].get_nickname(), fd, " " + cmd[1] + " :No topic is set\n");
+					Server::sendresponse(331, Clients[i].get_nickname(), fd, " " + cmd[1] + " :No topic is set\r\n");
 				else
-					Server::sendresponse(332, Clients[i].get_nickname(), fd, " " + cmd[1] + " :" + Channels[j].get_topic() + "\n");
+					Server::sendresponse(332, Clients[i].get_nickname(), fd, " " + cmd[1] + " :" + Channels[j].get_topic() + "\r\n");
 				return;
 			}
-			if (Channels[j].get_modes()['t'] == false && Channels[j].get_clients()[&Clients[i]] == false)
+			if (Channels[j].get_modes()['t'] == false && !is_op_in(Clients[i], Channels[j]))
 			{
-				Server::senderror(482, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not channel operator\n");
+				Server::senderror(482, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not channel operator\r\n");
 				return;
 			}
 			Channels[j].set_topic(cmd[2]);
@@ -184,60 +193,65 @@ void Server::topic(int fd, std::vector<std::string> cmd, int i)
 			return;
 		}
 	}
-	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
+}
+
+void Server::broadcastmsg(std::string msg, Channel &channel)
+{
+	std::map<Client *, bool> *clis = channel.get_clients();
+	for (std::map<Client *, bool>::iterator it = clis->begin(); it != clis->end(); it++)
+	{
+		if (send((*it).first->getfd(), msg.c_str(), msg.size(), 0) == -1)
+			std::cerr << "send() faild" << std::endl;
+	}
 }
 
 void Server::kick(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[2].empty())
 	{
-		Server::senderror(461, Clients[i].get_nickname(), fd, " KICK :Not enough parameters\n");
+		Server::senderror(461, Clients[i].get_nickname(), fd, " KICK :Not enough parameters\r\n");
 		return;
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
 	{
-		std::map<Client *, bool> clis = Channels[j].get_clients();
+		std::map<Client *, bool> *clis = Channels[j].get_clients();
 		if (Channels[j].get_name() == cmd[1]) // if channel exists
 		{
 			if (!is_in_channel(Clients[i], Channels[j]))
 			{
-				Server::senderror(442, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not on that channel\n");
+				Server::senderror(442, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not on that channel\r\n");
 				return;
 			}
-			if (Channels[j].get_clients()[&Clients[i]] == false)
+			if (!is_op_in(Clients[i], Channels[j]))
 			{
-				Server::senderror(482, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not channel operator\n");
+				Server::senderror(482, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not channel operator\r\n");
 				return;
 			}
-			for (std::map<Client *, bool>::iterator it = clis.begin(); it != clis.end(); it++) // send message to specific client
+			for (std::map<Client *, bool>::iterator it = clis->begin(); it != clis->end(); it++) // send message to specific client
 			{
 				if ((*it).first->get_nickname() == cmd[2]) // if client exists
 				{
-					std::stringstream ss;
-					ss << ":127.0.0.1 KICK " << cmd[1] << " " << cmd[2];
-					if (cmd[3].empty())
-						ss << " :" << Clients[i].get_nickname() << "\n";
-					else
-						ss << " :" << cmd[3] << "\n";
-					std::string resp = ss.str();
-					if (send((*it).first->getfd(), resp.c_str(), resp.size(), 0) == -1)
-						std::cerr << "send() faild" << std::endl;
-					Channels[j].remove_client((*it).first); // remove client from channel
+					std::string ss;
+					//:nickname!~username@127.0.0.1 KICK #ch5 BRUH :"reason"
+					ss = ":" + Clients[i].get_nickname() + "!~" + Clients[i].get_username() + "@127.0.0.1 KICK " + cmd[1] + " " + cmd[2] + cmd[3] + "\r\n";
+					Server::broadcastmsg(ss, Channels[j]);
+					clis->erase(it); // remove client from channel
 					return;
 				}
 			}
-			Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\n");
+			Server::senderror(401, Clients[i].get_nickname(), fd, " :no such nick\r\n");
 			return;
 		}
 	}
-	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
 }
 
 void Server::invite(int fd, std::vector<std::string> cmd, int i)
 {
 	if (cmd[1].empty() || cmd[2].empty())
 	{
-		Server::senderror(461, Clients[i].get_nickname(), fd, " INVITE :Not enough parameters\n");
+		Server::senderror(461, Clients[i].get_nickname(), fd, " INVITE :Not enough parameters\r\n");
 		return;
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
@@ -246,12 +260,12 @@ void Server::invite(int fd, std::vector<std::string> cmd, int i)
 		{
 			if (!is_in_channel(Clients[i], Channels[j]))
 			{
-				Server::senderror(442, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not on that channel\n");
+				Server::senderror(442, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not on that channel\r\n");
 				return;
 			}
-			if (Channels[j].get_modes()['i'] == true && Channels[j].get_clients()[&Clients[i]] == false)
+			if (Channels[j].get_modes()['i'] == true && !is_op_in(Clients[i], Channels[j]))
 			{
-				Server::senderror(482, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not channel operator\n");
+				Server::senderror(482, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not channel operator\r\n");
 				return;
 			}
 			for (size_t k = 0; k < Clients.size(); k++) // send message to specific client
@@ -260,18 +274,18 @@ void Server::invite(int fd, std::vector<std::string> cmd, int i)
 				{
 					Channels[j].add_invite(Clients[k].get_nickname());
 					std::stringstream ss;
-					ss << ":127.0.0.1 INVITE " << cmd[1] << " :" << cmd[2] << "\n";
+					ss << ":127.0.0.1 INVITE " << cmd[1] << " :" << cmd[2] << "\r\n";
 					std::string resp = ss.str();
 					if (send(Clients[k].getfd(), resp.c_str(), resp.size(), 0) == -1)
 						std::cerr << "send() faild" << std::endl;
 					return;
 				}
 			}
-			Server::senderror(401, Clients[i].get_nickname(), fd, " :No such nick/channel\n");
+			Server::senderror(401, Clients[i].get_nickname(), fd, " :No such nick/channel\r\n");
 			return;
 		}
 	}
-	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[2]+":No such channel\n");
+	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[2]+":No such channel\r\n");
 }
 
 void Server::mode(int fd, std::vector<std::string> cmd, int i)
@@ -279,7 +293,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 	std::map<char, bool> modes = Channels[i].get_modes();
 	if (cmd[1].empty() || cmd[1][0] != '#')
 	{
-		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+		Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
 		return;
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
@@ -288,7 +302,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 		{
 			if (!is_in_channel(Clients[i], Channels[j]))
 			{
-				Server::senderror(442, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not on that channel\n");
+				Server::senderror(442, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not on that channel\r\n");
 				return;
 			}
 			if (cmd[2].empty())
@@ -300,7 +314,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 					if ((*it).second == true)
 						ss << (*it).first;
 				}
-				ss << "\n";
+				ss << "\r\n";
 				std::string resp = ss.str();
 				if (send(fd, resp.c_str(), resp.size(), 0) == -1)
 					std::cerr << "send() faild" << std::endl;
@@ -310,16 +324,16 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 			{
 				for (size_t k = 1; k < cmd[2].size(); k++)
 				{
-					if (Channels[j].get_clients()[&Clients[i]] == false && (cmd[2][k] == 'o' || cmd[2][k] == 'l' || cmd[2][k] == 'k'))
+					if (!is_op_in(Clients[i], Channels[j]) && (cmd[2][k] == 'o' || cmd[2][k] == 'l' || cmd[2][k] == 'k'))
 					{
-						Server::senderror(482, Clients[i].get_nickname(), fd, " "+cmd[1]+" :You're not channel operator\n");
+						Server::senderror(482, Clients[i].get_nickname(), fd, " "+cmd[1]+" :You're not channel operator\r\n");
 						return;
 					}
 					if (cmd[2][k] == 'o')
 					{
 						if (cmd[3].empty())
 						{
-							Server::senderror(461, Clients[i].get_nickname(), fd, " MODE :Not enough parameters\n");
+							Server::senderror(461, Clients[i].get_nickname(), fd, " MODE :Not enough parameters\r\n");
 							return;
 						}
 						for (size_t l = 0; l < Clients.size(); l++)
@@ -327,44 +341,44 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							if (Clients[l].get_nickname() == cmd[3])
 							{
 								Channels[j].set_operator(&Clients[l]);
-								Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +o " + cmd[3] + "\n");
+								Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +o " + cmd[3] + "\r\n");
 								return;
 							}
 						}
-						Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\n");
+						Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\r\n");
 						return;
 					}
 					else if (cmd[2][k] == 't')
 					{
 						Channels[j].set_mode('t', true);
-						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +t\n");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +t\r\n");
 					}
 					else if (cmd[2][k] == 'i')
 					{
 						Channels[j].set_mode('i', true);
-						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +i\n");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +i\r\n");
 					}
 					else if (cmd[2][k] == 'l')
 					{
 						if (cmd[3].empty())
 						{
-							Server::senderror(461, Clients[i].get_nickname(), fd, " MODE :Not enough parameters\n");
+							Server::senderror(461, Clients[i].get_nickname(), fd, " MODE :Not enough parameters\r\n");
 							return;
 						}
 						Channels[j].set_mode('l', true);
 						Channels[j].set_limit(std::stoi(cmd[3]));
-						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +l " + cmd[3] + "\n");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +l " + cmd[3] + "\r\n");
 					}
 					else if (cmd[2][k] == 'k')
 					{
 						if (cmd[3].empty())
 						{
-							Server::senderror(461, Clients[i].get_nickname(), fd, " MODE :Not enough parameters\n");
+							Server::senderror(461, Clients[i].get_nickname(), fd, " MODE :Not enough parameters\r\n");
 							return;
 						}
 						Channels[j].set_mode('k', true);
 						Channels[j].set_key(cmd[3]);
-						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +k " + cmd[3] + "\n");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " +k " + cmd[3] + "\r\n");
 					}
 				}
 			}
@@ -379,39 +393,39 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							if (Clients[l].get_nickname() == cmd[3])
 							{
 								Channels[j].remove_operator(&Clients[l]);
-								Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -o " + cmd[3] + "\n");
+								Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -o " + cmd[3] + "\r\n");
 								return;
 							}
 						}
-						Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\n");
+						Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\r\n");
 						return;
 					}
 					else if (cmd[2][k] == 't')
 					{
 						Channels[j].set_mode('t', false);
-						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -t\n");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -t\r\n");
 					}
 					else if (cmd[2][k] == 'i')
 					{
 						Channels[j].set_mode('i', false);
-						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -i\n");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -i\r\n");
 					}
 					else if (cmd[2][k] == 'l')
 					{
 						Channels[j].set_mode('l', false);
 						Channels[j].set_limit(-1);
-						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -l\n");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -l\r\n");
 					}
 					else if (cmd[2][k] == 'k')
 					{
 						Channels[j].set_mode('k', false);
 						Channels[j].set_key("");
-						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -k\n");
+						Server::sendresponse(324, Clients[i].get_nickname(), fd, " :" + Channels[j].get_name() + " -k\r\n");
 					} // to complete later
 				}
 			}
 			return;
 		}
 	}
-	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\n");
+	Server::senderror(403, Clients[i].get_nickname(), fd, " "+cmd[1]+" :No such channel\r\n");
 }

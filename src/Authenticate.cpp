@@ -6,7 +6,7 @@ void Server::sendWelcomeMessages(Client &cli)
 	std::string nick = cli.get_nickname();
 	std::string user = cli.get_username();
 	std::string host = "127.0.0.1";
-	std::string servername = "myserver";
+	std::string servername = "127.0.0.1";
 	std::string version = "1.0.0";
 	std::string userModes = "";
 	std::string channelModes = "iklot";
@@ -22,8 +22,8 @@ void Server::sendWelcomeMessages(Client &cli)
 std::string get_users_in_channel(Channel channel)
 {
 	std::string users;
-	std::map<Client *, bool> clients = channel.get_clients();
-	for (std::map<Client *, bool>::iterator it = clients.begin(); it != clients.end(); it++)
+	std::map<Client *, bool> *clients = channel.get_clients();
+	for (std::map<Client *, bool>::iterator it = clients->begin(); it != clients->end(); it++)
 	{
 		if ((*it).second == true)
 			users += "@" + (*it).first->get_nickname() + " ";
@@ -48,10 +48,6 @@ void Server::ch_join_message(Client &cli, Channel channel)
 	std::string msg = ":" + servername + " 353 " + nickname + " = " + channelname + " :" + users + "\r\n";
 	msg += ":" + servername + " 366 " + nickname + " " + channelname + " :End of /NAMES list.\r\n";
 	Server::sendmsg(cli.getfd(), msg);
-	// msg = ":" + nickname + "!" + username + "@127.0.0.1 :End of /NAMES list.\r\n";
-	// Server::sendmsg(cli->getfd(), msg);
-
-	//send(cli->getfd(), msg.c_str(), msg.size(), 0);
 }
 
 void Server::ft_pass(int fd, std::vector<std::string> cmd)
@@ -139,7 +135,7 @@ void Server::ft_quit(int fd, std::vector<std::string> cmd)
 {
 	(void)cmd;
 	Client &cli = get_client_by_fd(Clients, fd);
-	Server::sendresponse(001, cli.get_nickname(), fd, " :Goodbye\n");
+	Server::sendmsg(cli.getfd(), ":" + cli.get_nickname() +"!" +cli.get_username() + "@127.0.0.1 QUIT :Client disconnected\r\n");
 	for (size_t i = 0; i < Clients.size(); i++)
 	{
 		if (Clients[i].getfd() == fd)

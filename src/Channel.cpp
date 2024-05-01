@@ -68,7 +68,7 @@ void Channel::set_mode(char mode, bool value)
 	this->modes[mode] = value;
 }
 
-void Channel::set_limit(int limit)
+void Channel::set_limit(size_t limit)
 {
 	this->limit = limit;
 }
@@ -78,11 +78,8 @@ void Channel::add_client(Client *cli)
     this->clients[cli] = false;
 	if (this->clients.size() == 1)
 		this->set_operator(cli);
-    for (std::map<Client*, bool>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
-    {
-		std::string msg = ":" + cli->get_nickname() + "!~" + cli->get_username() + "@127.0.0.1 JOIN :" + this->name + "\r\n";
-   		Server::sendmsg((*it).first->getfd(), msg);
-    }
+	std::string msg = ":" + cli->get_nickname() + "!~" + cli->get_username() + "@127.0.0.1 JOIN :" + this->name + "\r\n";
+    Server::broadcastmsg(msg, *this);
 	Server::ch_join_message(*cli, *this);
 }
 
@@ -93,15 +90,13 @@ void Channel::remove_client(Client *cli)
 	{
 		if ((*it).first->getfd() == cli->getfd())
 		{
-			Server::sendresponse(332, (*it).first->get_nickname(), (*it).first->getfd(), " :You have left the channel\n");
+			Server::broadcastmsg(":" + cli->get_nickname() + "!~" + cli->get_username() + "@127.0.0.1 PART " + this->name + "\r\n", *this);
 			this->clients.erase(it);
-			for (std::map<Client*, bool>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
-				Server::sendresponse(332, (*it).first->get_nickname(), (*it).first->getfd(), " :" + cli->get_nickname() + " has left the channel\n");
 			return;
 		}
 		it++;
 	}
-	Server::senderror(442, cli->get_nickname(), cli->getfd(), " :is not on channel\n");
+	Server::sendmsg(cli->getfd(), ":127.0.0.1 442 " + cli->get_nickname() + " " + this->name + " :You're not on that channel\r\n");
 }
 
 void Channel::remove_operator(Client *cli)
@@ -138,14 +133,14 @@ std::string Channel::get_name() const
 	return this->name;
 }
 
-int Channel::get_limit() const
+size_t Channel::get_limit() const
 {
 	return this->limit;
 }
 
-std::map<Client*, bool> Channel::get_clients() const
+std::map<Client*, bool> *Channel::get_clients() const
 {
-	return this->clients;
+	return (std::map<Client*, bool>*)&this->clients;
 }
 
 std::map<char, bool> Channel::get_modes() const
