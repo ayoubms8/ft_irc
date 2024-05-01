@@ -19,33 +19,39 @@ void Server::sendWelcomeMessages(Client &cli)
 	Server::sendresponse(005, nick, cli.getfd(), " :" + servername + " " + featureList + " :are supported by this server" + "\r\n");
 }
 
-std::string get_users_in_channel(Channel *channel)
+std::string get_users_in_channel(Channel channel)
 {
 	std::string users;
-	std::map<Client *, bool> clients = channel->get_clients();
+	std::map<Client *, bool> clients = channel.get_clients();
 	for (std::map<Client *, bool>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
-		users += (*it).first->get_nickname() + " ";
+		if ((*it).second == true)
+			users += "@" + (*it).first->get_nickname() + " ";
+		else
+			users += (*it).first->get_nickname() + " ";
 	}
+	if (!users.empty())
+        users = users.substr(0, users.size() - 1);
 	return users;
 }
 
-void Server::ch_join_message(Client *cli, Channel *channel)
+void Server::ch_join_message(Client &cli, Channel channel)
 {
-	std::string nickname = cli->get_nickname();
+	std::string nickname = cli.get_nickname();
 	std::string servername = "127.0.0.1";
-	std::string channelname = channel->get_name();
+	std::string channelname = channel.get_name();
 	std::string users = get_users_in_channel(channel);
-	std::string topic = channel->get_topic();
-	std::string mode = "+nt";
-
+	std::string username = cli.get_username();
+	std::string topic = channel.get_topic();
+	std::string mode = "+t";
+	
 	std::string msg = ":" + servername + " 353 " + nickname + " = " + channelname + " :" + users + "\r\n";
-	msg += ":" + servername + " 366 " + nickname + " " + channelname + " :End of NAMES list\r\n";
-	msg += ":" + servername + " 332 " + nickname + " " + channelname + " :" + topic + "\r\n";
-	msg += ":" + servername + " 333 " + nickname + " " + channelname + " :End of TOPIC\r\n";
-	msg += ":" + servername + " 324 " + nickname + " " + channelname + " " + mode + "\r\n";
+	msg += ":" + servername + " 366 " + nickname + " " + channelname + " :End of /NAMES list.\r\n";
+	Server::sendmsg(cli.getfd(), msg);
+	// msg = ":" + nickname + "!" + username + "@127.0.0.1 :End of /NAMES list.\r\n";
+	// Server::sendmsg(cli->getfd(), msg);
 
-	send(cli->getfd(), msg.c_str(), msg.size(), 0);
+	//send(cli->getfd(), msg.c_str(), msg.size(), 0);
 }
 
 void Server::ft_pass(int fd, std::vector<std::string> cmd)
@@ -78,7 +84,7 @@ void Server::ft_nick(int fd, std::vector<std::string> cmd)
 	{
 		if (Clients[j].get_nickname() == cmd[1] && Clients[j].getfd() != cli.getfd())
 		{
-			Server::senderror(433, cli.get_nickname(), cli.getfd(), " :Nickname is already in use\n");
+			Server::senderror(433, cmd[1], cli.getfd(), " :Nickname is already in use\n");
 			return;
 		}
 	}

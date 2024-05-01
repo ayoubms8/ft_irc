@@ -115,7 +115,6 @@ void	Server::AcceptNewClient()
 	Client new_client(new_pol_fd.fd, addr, addr_len);
 	this->Clients.push_back(new_client);
 	std::cout << "New client connected\n";
-	Server::sendresponse(001, "127.0.0.1 ", new_pol_fd.fd, "Welcome to the server\n");
 }
 
 int	count_args(std::string str)
@@ -148,7 +147,10 @@ std::vector<std::string> parse_cmd(std::string str)
     {
         str.erase(pos, 2);
     }
-
+	else if ((pos = str.find("\n")) != std::string::npos)
+	{
+		str.erase(pos, 1);
+	}
     // Extract the prefix if it exists
     if (str[0] == ':')
     {
@@ -223,7 +225,6 @@ bool	Server::authentication(int fildD, std::vector<std::string> command)
 	//execute the authentication
 	if (isCompared(command[0], "pass"))
 		ft_pass(fildD, command);
-	
 	else if (isCompared(command[1], "nick"))
 		ft_nick(fildD, command);
 	else if (isCompared(command[1], "user"))
@@ -240,15 +241,17 @@ void	Server::execute(int fildD, std::vector<std::string> command)
 	while (++i < Clients.size())
 		if (Clients[i].getfd() == fildD)
 			break ;
-	if (command[0] == "pass" || command[0] == "PASS")
+	if (isCompared(command[0], "pong"))
+		return ;
+	else if (isCompared(command[0], "pass"))
 		ft_pass(fildD, command);
-	else if (command[0] == "nick" || command[0] == "NICK")
+	else if (isCompared(command[0], "nick"))
 		ft_nick(fildD, command);
-	else if (command[0] == "user" || command[0] == "USER")
+	else if (isCompared(command[0], "user"))
 		ft_user(fildD, command);
-	else if (command[0] == "quit" || command[0] == "QUIT")
+	else if (isCompared(command[0], "quit"))
 		ft_quit(fildD, command);
-	if (!Clients[i].get_auth())
+	else if (!Clients[i].get_auth())
 	{
 		std::cout << "Client " << i + 1 << " needs to authenticate first\n";
 		return;
@@ -286,6 +289,7 @@ void	Server::ReceiveNewData(int fd)
 	{
 		buffer[ret] = '\0';
 		std::string str(buffer);
+		std::cout << "Received: " << str << std::endl;
 		std::vector<std::string> cmd = parse_cmd(str);
 		this->execute(fd, cmd);	
 	}

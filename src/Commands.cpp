@@ -68,7 +68,6 @@ void Server::join(int fd, std::vector<std::string> cmd, int i)
 	}
 	Channel new_channel(cmd[1]);
 	new_channel.add_client(&Clients[i]);
-	new_channel.set_operator(&Clients[i]);
 	Channels.push_back(new_channel);
 	return;
 }

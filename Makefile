@@ -15,12 +15,12 @@ OBJS := $(addprefix objs/, $(OBJ))
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(OBJS) -o $(NAME) -I inc
+	$(CC) -g $(OBJS) -o $(NAME) -I inc
 	@echo "build complete!"
 
 $(OBJS_DIR)%.o: $(SRCS_DIR)%.cpp inc/Server.hpp inc/Client.hpp inc/Channel.hpp
 	@mkdir -p $(OBJS_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) -g $(CFLAGS) -c $< -o $@
 
 clean:
 	@rm -rf $(OBJS_DIR)
