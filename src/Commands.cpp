@@ -176,7 +176,7 @@ void Server::topic(int fd, std::vector<std::string> cmd, int i)
 					Server::sendresponse(332, Clients[i].get_nickname(), fd, " " + cmd[1] + " :" + Channels[j].get_topic() + "\r\n");
 				return;
 			}
-			if (Channels[j].get_modes()['t'] == false && !is_op_in(Clients[i], Channels[j]))
+			if (Channels[j].get_modes()['t'] == true && !is_op_in(Clients[i], Channels[j]))
 			{
 				Server::senderror(482, Clients[i].get_nickname(), fd, " "+Channels[j].get_name()+" :You're not channel operator\r\n");
 				return;
@@ -233,11 +233,11 @@ void Server::kick(int fd, std::vector<std::string> cmd, int i)
 				if ((*it).first->get_nickname() == cmd[2]) // if client exists
 				{
 					std::string ss;
-					//:nickname!~username@127.0.0.1 KICK #ch5 BRUH :"reason"
+					//:nickname!username@127.0.0.1 KICK #ch5 BRUH :"reason"
 					if (cmd[3].empty())
-						ss = ":" + Clients[i].get_nickname() + "!~" + Clients[i].get_username() + "@127.0.0.0 KICK " + cmd[1] + " " + cmd[2] + " :No reason given\r\n";
+						ss = ":" + Clients[i].get_nickname() + "!" + Clients[i].get_username() + "@127.0.0.0 KICK " + cmd[1] + " " + cmd[2] + " :No reason given\r\n";
 					else
-						ss = ":" + Clients[i].get_nickname() + "!~" + Clients[i].get_username() + "@127.0.0.1 KICK " + cmd[1] + " " + cmd[2] + " :"+ cmd[3] + "\r\n";
+						ss = ":" + Clients[i].get_nickname() + "!" + Clients[i].get_username() + "@127.0.0.1 KICK " + cmd[1] + " " + cmd[2] + " :"+ cmd[3] + "\r\n";
 					Server::broadcastmsg(ss, Channels[j]);
 					clis->erase(it); // remove client from channel
 					return;
@@ -305,7 +305,7 @@ void	make_op(Channel &Ch, std::vector<std::string> cmd, std::deque<Client> &Clie
 		if (Clients[l].get_nickname() == cmd[3])
 		{
 			Ch.set_operator(&Clients[l]);
-			Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +o "+cmd[3]+"\r\n", Ch);
+			Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +o "+cmd[3]+"\r\n", Ch);
 			return;
 		}
 	}
@@ -359,12 +359,12 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 					else if (cmd[2][k+1] == 't')
 					{
 						Channels[j].set_mode('t', true);
-						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +t\r\n", Channels[j]);
+						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +t\r\n", Channels[j]);
 					}
 					else if (cmd[2][k+1] == 'i')
 					{
 						Channels[j].set_mode('i', true);
-						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +i\r\n", Channels[j]);
+						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +i\r\n", Channels[j]);
 					}
 					else if (cmd[2][k+1] == 'l')
 					{
@@ -375,7 +375,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 						}
 						Channels[j].set_mode('l', true);
 						Channels[j].set_limit(std::stoi(cmd[3]));
-						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +l "+cmd[3]+"\r\n", Channels[j]);
+						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +l "+cmd[3]+"\r\n", Channels[j]);
 					}
 					else if (cmd[2][k+1] == 'k')
 					{
@@ -386,7 +386,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 						}
 						Channels[j].set_mode('k', true);
 						Channels[j].set_key(cmd[3]);
-						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +k "+cmd[3]+"\r\n", Channels[j]);
+						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" +k "+cmd[3]+"\r\n", Channels[j]);
 					}
 				}
 				else if (cmd[2][k] == '-')
@@ -398,7 +398,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							if (Clients[l].get_nickname() == cmd[3])
 							{
 								Channels[j].remove_operator(&Clients[l]);
-								Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -o "+cmd[3]+"\r\n", Channels[j]);
+								Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -o "+cmd[3]+"\r\n", Channels[j]);
 								continue;
 							}
 						}
@@ -408,24 +408,24 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 					else if (cmd[2][k+1] == 't')
 					{
 						Channels[j].set_mode('t', false);
-						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -t\r\n", Channels[j]);
+						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -t\r\n", Channels[j]);
 					}
 					else if (cmd[2][k+1] == 'i')
 					{
 						Channels[j].set_mode('i', false);
-						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -i\r\n", Channels[j]);
+						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -i\r\n", Channels[j]);
 					}
 					else if (cmd[2][k+1] == 'l')
 					{
 						Channels[j].set_mode('l', false);
 						Channels[j].set_limit(-1);
-						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -l\r\n", Channels[j]);
+						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -l\r\n", Channels[j]);
 					}
 					else if (cmd[2][k+1] == 'k')
 					{
 						Channels[j].set_mode('k', false);
 						Channels[j].set_key("");
-						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!~"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -k\r\n", Channels[j]);
+						Server::broadcastmsg(":"+Clients[i].get_nickname()+"!"+Clients[i].get_username()+"@127.0.0.1 MODE "+cmd[1]+" -k\r\n", Channels[j]);
 					} // to complete later
 				}
 			}

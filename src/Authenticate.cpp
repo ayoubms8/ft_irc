@@ -120,7 +120,6 @@ void Server::ft_user(int fd, std::vector<std::string> cmd)
 	}
 	else
 	{
-
 		cli.set_has_user(true);
 		cli.set_username(cmd[1]);
 		cli.set_realname(cmd[4]);
@@ -140,6 +139,12 @@ void Server::ft_quit(int fd, std::vector<std::string> cmd)
 	{
 		if (Clients[i].getfd() == fd)
 		{
+			for (size_t j = 0; j < Channels.size(); j++)
+			{
+				Channels[j].remove_client(&Clients[i]);
+				if (Channels[j].get_clients()->empty())
+					Channels.erase(Channels.begin() + j);
+			}
 			// Clients[i].leave_all_channels();
 			Clients[i].reset();
 			Clients.erase(Clients.begin() + i);

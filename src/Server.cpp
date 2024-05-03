@@ -311,10 +311,17 @@ void	Server::Closefds()
 
 void	Server::rmclient(int fd)
 {
+
 	for (size_t i = 0; i < Clients.size(); i++)
 	{
 		if (Clients[i].getfd() == fd)
 		{
+			for (size_t j = 0; j < Channels.size(); j++)
+			{
+				Channels[j].remove_client(&Clients[i]);
+				if (Channels[j].get_clients()->empty())
+					Channels.erase(Channels.begin() + j);
+			}
 			//Clients[i].leave_all_channels();
 			Clients[i].reset();
 			Clients.erase(Clients.begin() + i);

@@ -1,3 +1,2 @@
-fix mode responses
-fix when last user parts channel gets deleted
-
+@ not showing up in userlist after using mode +o
++i mode not showing that it works properly
