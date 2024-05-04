@@ -277,6 +277,7 @@ void	Server::execute(int fildD, std::vector<std::string> command)
 void	Server::ReceiveNewData(int fd)
 {
 	char buffer[1024];
+	std::string::size_type pos;
 	int ret = recv(fd, buffer, 1024, 0);
 	if (ret == -1)
 		throw(std::runtime_error("recv() faild"));
@@ -290,8 +291,17 @@ void	Server::ReceiveNewData(int fd)
 		buffer[ret] = '\0';
 		std::string str(buffer);
 		std::cout << "Received: " << str << std::endl;
-		std::vector<std::string> cmd = parse_cmd(str);
-		this->execute(fd, cmd);	
+		pos = str.find("\r\n");
+		while (pos != std::string::npos)
+		{
+			std::string temp = str.substr(0, pos);
+			std::vector<std::string> cmd = parse_cmd(temp);
+			if (!authentication(fd, cmd))
+				return ;
+			this->execute(fd, cmd);
+			str.erase(0, pos + 2);
+			pos = str.find("\r\n");
+		}
 	}
 }
 
