@@ -16,7 +16,7 @@ void Server::sendWelcomeMessages(Client &cli)
 	Server::sendresponse(002, nick, cli.getfd(), " :Your host is " + servername + ", running version " + version + "\r\n");
 	Server::sendresponse(003, nick, cli.getfd(), " :This server was created " + creationdate + "\r\n");
 	Server::sendresponse(004, nick, cli.getfd(), " :" + servername + " " + version + " " + userModes + " " + channelModes + "\r\n");
-	Server::sendresponse(005, nick, cli.getfd(), " :" + servername + " " + featureList + " :are supported by this server" + "\r\n");
+	//Server::sendresponse(005, nick, cli.getfd(), " :" + servername + " " + featureList + " :are supported by this server" + "\r\n");
 }
 
 std::string get_users_in_channel(Channel channel)
