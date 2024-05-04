@@ -54,13 +54,13 @@ void	Server::Serverinit(int port, std::string password)
 	
 	int en = 1;
 	if (setsockopt(ser_pol_fd.fd, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)))
-		throw(std::runtime_error("faild to set option (SO_REUSEADDR) on socket"));
+		throw(std::runtime_error("failure to set option (SO_REUSEADDR) on socket"));
 	if (fcntl(ser_pol_fd.fd, F_SETFL, O_NONBLOCK) == -1)
-		throw(std::runtime_error("faild to set option (O_NONBLOCK) on socket"));
+		throw(std::runtime_error("failure to set option (O_NONBLOCK) on socket"));
 	if (bind(ser_pol_fd.fd, (struct sockaddr *)&addr, sizeof(addr)) == -1)
-		throw(std::runtime_error("faild to bind socket"));
+		throw(std::runtime_error("failure to bind socket"));
 	if (listen(ser_pol_fd.fd, SOMAXCONN) == -1)
-		throw(std::runtime_error("listen() faild"));
+		throw(std::runtime_error("listen() failure"));
 	ser_pol_fd.events = POLLIN;
 	ser_pol_fd.revents = 0;
 	this->pollfds.push_back(ser_pol_fd);
@@ -106,9 +106,9 @@ void	Server::AcceptNewClient()
 
 	new_pol_fd.fd = accept(pollfds[0].fd, (struct sockaddr *)&addr, &addr_len);
 	if (new_pol_fd.fd == -1)
-		throw(std::runtime_error("accept() faild"));
+		throw(std::runtime_error("accept() failure"));
 	if (fcntl(new_pol_fd.fd, F_SETFL, O_NONBLOCK) == -1)
-		throw(std::runtime_error("faild to set option (O_NONBLOCK) on socket"));
+		throw(std::runtime_error("failure to set option (O_NONBLOCK) on socket"));
 	new_pol_fd.events = POLLIN;
 	new_pol_fd.revents = 0;
 	this->pollfds.push_back(new_pol_fd);
@@ -173,12 +173,11 @@ std::vector<std::string> parse_cmd(std::string str)
             str.erase(0, pos + 1);
         }
     }
-
     if (!str.empty())
     {
         cmd.push_back(str);
     }
-
+	cmd.push_back("");
     return cmd;
 }
 
@@ -188,7 +187,7 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 	ss << ":127.0.0.1 " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
-		std::cerr << "send() faild" << std::endl;
+		std::cerr << "send() failure" << std::endl;
 }
 
 void Server::sendresponse(int code, std::string clientname, int fd, std::string msg)
@@ -197,13 +196,13 @@ void Server::sendresponse(int code, std::string clientname, int fd, std::string 
 	ss << ":127.0.0.1 " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
-		std::cerr << "send() faild" << std::endl;
+		std::cerr << "send() failure" << std::endl;
 }
 
 void Server::sendmsg(int fd, std::string msg)
 {
 	if(send(fd, msg.c_str(), msg.size(),0) == -1)
-		std::cerr << "send() faild" << std::endl;
+		std::cerr << "send() failure" << std::endl;
 }
 bool	Server::isCompared(std::string const &str1, std::string const &str2)
 {
@@ -280,7 +279,7 @@ void	Server::ReceiveNewData(int fd)
 	std::string::size_type pos;
 	int ret = recv(fd, buffer, 1024, 0);
 	if (ret == -1)
-		throw(std::runtime_error("recv() faild"));
+		throw(std::runtime_error("recv() failure"));
 	if (ret == 0)
 	{
 		std::cout << "Client disconnected\n";
@@ -299,6 +298,15 @@ void	Server::ReceiveNewData(int fd)
 			this->execute(fd, cmd);
 			str.erase(0, pos + 2);
 			pos = str.find("\r\n");
+		}
+		pos = str.find("\n");
+		while (pos != std::string::npos)
+		{
+			std::string temp = str.substr(0, pos);
+			std::vector<std::string> cmd = parse_cmd(temp);
+			this->execute(fd, cmd);
+			str.erase(0, pos + 2);
+			pos = str.find("\n");
 		}
 	}
 }

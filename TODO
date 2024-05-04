@@ -2,3 +2,4 @@
 +i mode not showing that it works properly
 treat every \r\n as separate command
 :BRUH!~asdf@freenode-obu.d75.6g0qj4.IP MODE #ch1 :+i
+:BRUH!~asdf@freenode-obu.d75.6g0qj4.IP MODE #ch22 +o :BRUHH

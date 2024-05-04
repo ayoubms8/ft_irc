@@ -129,7 +129,7 @@ void Server::privmsg(int fd, std::vector<std::string> cmd, int i)
 						ss << ":" << Clients[i].get_nickname() << " PRIVMSG " << cmd[1] << " :" << cmd[2] << "\r\n";
 						std::string resp = ss.str();
 						if (send(Clients[k].getfd(), resp.c_str(), resp.size(), 0) == -1)
-							std::cerr << "send() faild" << std::endl;
+							std::cerr << "send() failure" << std::endl;
 					}
 				}
 				return;
@@ -145,7 +145,7 @@ void Server::privmsg(int fd, std::vector<std::string> cmd, int i)
 			ss << ":" << Clients[i].get_nickname() << " PRIVMSG " << cmd[1] << " :" << cmd[2] << "\r\n";
 			std::string resp = ss.str();
 			if (send(Clients[j].getfd(), resp.c_str(), resp.size(), 0) == -1)
-				std::cerr << "send() faild" << std::endl;
+				std::cerr << "send() failure" << std::endl;
 			return;
 		}
 	}
@@ -188,7 +188,7 @@ void Server::topic(int fd, std::vector<std::string> cmd, int i)
 			{
 				if (is_in_channel(Clients[k], Channels[j]))
 					if (send(Clients[k].getfd(), topic_msg.c_str(), topic_msg.size(), 0) == -1)
-						std::cerr << "send() faild" << std::endl;
+						std::cerr << "send() failure" << std::endl;
 			}
 			return;
 		}
@@ -202,7 +202,7 @@ void Server::broadcastmsg(std::string msg, Channel &channel)
 	for (std::map<Client *, bool>::iterator it = clis->begin(); it != clis->end(); it++)
 	{
 		if (send((*it).first->getfd(), msg.c_str(), msg.size(), 0) == -1)
-			std::cerr << "send() faild" << std::endl;
+			std::cerr << "send() failure" << std::endl;
 	}
 }
 
@@ -282,7 +282,7 @@ void Server::invite(int fd, std::vector<std::string> cmd, int i)
 					ss << ":127.0.0.1 INVITE " << cmd[1] << " :" << cmd[2] << "\r\n";
 					std::string resp = ss.str();
 					if (send(Clients[k].getfd(), resp.c_str(), resp.size(), 0) == -1)
-						std::cerr << "send() faild" << std::endl;
+						std::cerr << "send() failure" << std::endl;
 					return;
 				}
 			}
@@ -347,7 +347,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 								Channels[j].set_operator(&Clients[l]);
 								Server::broadcastmsg(":" + Clients[i].get_nickname() + "!~" + Clients[i].get_username() + "@127.0.0.1 MODE " + cmd[1] + " +o :" + cmd[3+params] + "\r\n", Channels[j]);
 								params++;
-								continue;
+								return;
 							}
 						}
 						Server::senderror(441, Clients[i].get_nickname(), Clients[i].getfd(), " :They aren't on that channel\r\n");
@@ -405,7 +405,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 								Channels[j].remove_operator(&Clients[l]);
 								Server::broadcastmsg(":" + Clients[i].get_nickname() + "!~" + Clients[i].get_username() + "@127.0.0.1 MODE " + cmd[1] + " -o :" + cmd[3+params] + "\r\n", Channels[j]);
 								params++;
-								continue;
+								return;
 							}
 						}
 						Server::senderror(441, Clients[i].get_nickname(), fd, " :They aren't on that channel\r\n");
