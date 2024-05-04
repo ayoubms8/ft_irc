@@ -10,12 +10,12 @@ void Server::sendWelcomeMessages(Client &cli)
 	std::string version = "1.0.0";
 	std::string userModes = "";
 	std::string channelModes = "iklot";
-	std::string featureList = "CHANTYPES=#& PREFIX=(ov)@+ CHANMODES=o,k,l,t,i";
+	std::string featureList = "CHANTYPES=# PREFIX=(o)@ CHANMODES=o,k,l,t,i";
 
-	Server::sendresponse(001, nick, cli.getfd(), " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\n");
-	Server::sendresponse(002, nick, cli.getfd(), " :Your host is " + servername + ", running version " + version + "\n");
-	Server::sendresponse(003, nick, cli.getfd(), " :This server was created " + creationdate + "\n");
-	Server::sendresponse(004, nick, cli.getfd(), " :" + servername + " " + version + " " + userModes + " " + channelModes + "\n");
+	Server::sendresponse(001, nick, cli.getfd(), " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\r\n");
+	Server::sendresponse(002, nick, cli.getfd(), " :Your host is " + servername + ", running version " + version + "\r\n");
+	Server::sendresponse(003, nick, cli.getfd(), " :This server was created " + creationdate + "\r\n");
+	Server::sendresponse(004, nick, cli.getfd(), " :" + servername + " " + version + " " + userModes + " " + channelModes + "\r\n");
 	Server::sendresponse(005, nick, cli.getfd(), " :" + servername + " " + featureList + " :are supported by this server" + "\r\n");
 }
 
