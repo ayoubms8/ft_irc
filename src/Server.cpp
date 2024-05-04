@@ -296,8 +296,6 @@ void	Server::ReceiveNewData(int fd)
 		{
 			std::string temp = str.substr(0, pos);
 			std::vector<std::string> cmd = parse_cmd(temp);
-			if (!authentication(fd, cmd))
-				return ;
 			this->execute(fd, cmd);
 			str.erase(0, pos + 2);
 			pos = str.find("\r\n");
