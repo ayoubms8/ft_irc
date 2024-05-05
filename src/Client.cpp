@@ -17,16 +17,13 @@ void	Client::reset()
 	this->has_user = false;
 	this->has_pass = false;
 	this->username.clear();
-	this->realname.clear();
 	this->nickname.clear();
+	this->ip.clear();
 	//this->channels.clear();
 }
 
-Client::Client(int fd, struct sockaddr_in addr, socklen_t addr_len) : is_auth(false), has_nick(false), has_user(false)
+Client::Client(int fd, std::string ip) :fd(fd), ip(ip), is_auth(false), has_nick(false), has_user(false)
 {
-	this->fd = fd;
-	this->addr = addr;
-	this->addr_len = addr_len;
 }
 
 int Client::getfd() const
@@ -116,6 +113,11 @@ void Client::set_has_user(bool user)
 	this->has_user = user;
 }
 
+std::string Client::get_ip() const
+{
+	return this->ip;
+}
+
 std::string Client::get_username() const
 {
 	return this->username;
@@ -136,14 +138,9 @@ void Client::set_nickname(std::string nickname)
 	this->nickname = nickname;
 }
 
-std::string Client::get_realname() const
+void Client::set_ip(std::string ip)
 {
-	return this->realname;
-}
-
-void Client::set_realname(std::string realname)
-{
-	this->realname = realname;
+	this->ip = ip;
 }
 
 Client::Client(const Client &copy)

@@ -13,20 +13,17 @@ class Client
 {
 private:
 	int						fd;
+	std::string 			ip;
 	bool					is_auth;
 	bool					has_nick;
 	bool					has_user;
 	bool					has_pass;
 	std::string				username;
-	std::string				realname;
 	std::string				nickname;
-	struct sockaddr_in		addr;
-	socklen_t				addr_len;
-	//std::vector<Channel*> channels;
 
 public:
 	Client();
-	Client(int fd, struct sockaddr_in addr, socklen_t addr_len);
+	Client(int fd, std::string ip);
 	Client(const Client &copy);
 	Client &operator=(const Client &copy);
 	int						getfd() const;
@@ -45,9 +42,9 @@ public:
 	void					set_has_user(bool user);
 	std::string				get_username() const;
 	std::string				get_nickname() const;
-	std::string				get_realname() const;
-	void					set_realname(std::string realname);
+	std::string				get_ip() const;
 	void					set_username(std::string username);
 	void					set_nickname(std::string nickname);
+	void					set_ip(std::string ip);
 	~Client();
 };

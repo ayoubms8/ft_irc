@@ -78,7 +78,7 @@ void Channel::add_client(Client *cli)
     this->clients[cli] = false;
 	if (this->clients.size() == 1)
 		this->set_operator(cli);
-	std::string msg = ":" + cli->get_nickname() + "!~" + cli->get_username() + "@127.0.0.1 JOIN :" + this->name + "\r\n";
+	std::string msg = ":" + cli->get_nickname() + "!~" + cli->get_username() + "@" + cli->get_ip() + " JOIN :" + this->name + "\r\n";
     Server::broadcastmsg(msg, *this);
 	Server::ch_join_message(*cli, *this);
 }
@@ -90,13 +90,13 @@ void Channel::remove_client(Client *cli)
 	{
 		if ((*it).first->getfd() == cli->getfd())
 		{
-			Server::broadcastmsg(":" + cli->get_nickname() + "!~" + cli->get_username() + "@127.0.0.1 PART " + this->name + "\r\n", *this);
+			Server::broadcastmsg(":" + cli->get_nickname() + "!~" + cli->get_username() + "@" + cli->get_ip() + " PART " + this->name + "\r\n", *this);
 			this->clients.erase(it);
 			return;
 		}
 		it++;
 	}
-	Server::sendmsg(cli->getfd(), ":127.0.0.1 442 " + cli->get_nickname() + " " + this->name + " :You're not on that channel\r\n");
+	Server::sendmsg(cli->getfd(), ":" + Server::get_servername() + " 442 " + cli->get_nickname() + " " + this->name + " :You're not on that channel\r\n");
 }
 
 void Channel::remove_operator(Client *cli)

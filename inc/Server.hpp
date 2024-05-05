@@ -16,8 +16,9 @@ class Server
 private:
 	int							Port;
 	std::string					password;
+	static std::string			servername;
 	static bool					Signal;
-	std::deque<Client>			Clients;
+	std::deque<Client *>		Clients;
 	std::vector<Channel>		Channels;
 	std::vector<struct pollfd>	pollfds;
 	static std::string			creationdate;
@@ -35,6 +36,7 @@ public:
 	static void 	ch_join_message(Client &cli, Channel channel);
 	static void 	broadcastmsg(std::string msg, Channel &channel);
 	static void		sendmsg(int fd, std::string msg);
+	static std::string get_servername();
 	void			show_clients();
 
 	bool			authentication(int fildD, std::vector<std::string> command);
@@ -52,7 +54,8 @@ public:
 	void			mode(int fd, std::vector<std::string> cmd, int i);
 	void			kick(int fd, std::vector<std::string> cmd, int i);
 	void			invite(int fd, std::vector<std::string> cmd, int i);
-	Client			&get_client_by_fd(std::deque<Client> &clients, int fd);
+	Client 			*get_client_by_fd(std::deque<Client *> &clients, int fd);
+	bool 			is_in_channel(Client &cli, Channel &channel);
 	Server();
 	Server(const Server &copy);
 	Server &operator=(const Server &copy);	

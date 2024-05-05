@@ -1,19 +1,27 @@
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
 #include <sstream>
+#include <arpa/inet.h> // Add this line to include the header file later
 
 bool Server::Signal = false;
 std::string Server::creationdate;
+std::string Server::servername;
 
-Client &Server::get_client_by_fd(std::deque<Client> &clients, int fd)
+std::string	Server::get_servername()
+{
+	return Server::servername;
+}
+
+Client *Server::get_client_by_fd(std::deque<Client *> &clients, int fd)
 {
 	for (size_t i = 0; i < clients.size(); i++)
 	{
-		if (clients[i].getfd() == fd)
+		if (clients[i]->getfd() == fd)
 			return clients[i];
 	}
 	throw std::runtime_error("Client not found");
 }
+
 Server::Server()
 {
 	std::time_t now = std::time(0);
@@ -32,8 +40,8 @@ void	Server::show_clients()
 	std::cout << "Clients connected: " << Clients.size() << std::endl;
 	for (size_t i = 0; i < Clients.size(); i++)
 	{
-		std::cout << "Client " << i + 1 << " fd: " << Clients[i].getfd()  << " username : " << Clients[i].get_username() << " pass: " << Clients[i].get_has_pass() << " nickname: " << Clients[i].get_nickname() << " auth: " << Clients[i].get_auth() << std::endl;
-		std::cout << "has_user: " << Clients[i].get_has_user() << " has_nick: " << Clients[i].get_has_nick() << std::endl;
+		std::cout << "Client " << i + 1 << " fd: " << Clients[i]->getfd()  << " username : " << Clients[i]->get_username() << " pass: " << Clients[i]->get_has_pass() << " nickname: " << Clients[i]->get_nickname() << " auth: " << Clients[i]->get_auth() << std::endl;
+		std::cout << "has_user: " << Clients[i]->get_has_user() << " has_nick: " << Clients[i]->get_has_nick() << std::endl;
 	}
 }
 
@@ -64,11 +72,12 @@ void	Server::Serverinit(int port, std::string password)
 	ser_pol_fd.events = POLLIN;
 	ser_pol_fd.revents = 0;
 	this->pollfds.push_back(ser_pol_fd);
+	this->servername = "127.0.0.1";
 	std::cout << "Waiting to accept a connection...\n";
 
 	while (Server::Signal == false)
 	{
-		if((poll(&pollfds[0], pollfds.size(), -1) == -1) && Server::Signal == false)
+		if((poll(pollfds.data(), pollfds.size(), -1) == -1) && Server::Signal == false)
 			throw(std::runtime_error("poll failed"));	
 		for (size_t i = 0; i < pollfds.size(); i++)
 		{
@@ -112,9 +121,9 @@ void	Server::AcceptNewClient()
 	new_pol_fd.events = POLLIN;
 	new_pol_fd.revents = 0;
 	this->pollfds.push_back(new_pol_fd);
-	Client new_client(new_pol_fd.fd, addr, addr_len);
+	Client *new_client = new Client(new_pol_fd.fd, inet_ntoa(addr.sin_addr));
 	this->Clients.push_back(new_client);
-	std::cout << "New client connected\n";
+	std::cout << "New client connected from " << new_client->get_ip() << std::endl;
 }
 
 int	count_args(std::string str)
@@ -184,7 +193,7 @@ std::vector<std::string> parse_cmd(std::string str)
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":127.0.0.1 " << code << " " << clientname << msg;
+	ss << ":" + Server::get_servername() + " " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() failure" << std::endl;
@@ -193,7 +202,7 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 void Server::sendresponse(int code, std::string clientname, int fd, std::string msg)
 {
 	std::stringstream ss;
-	ss << ":127.0.0.1 " << code << " " << clientname << msg;
+	ss << ":" + Server::get_servername() + " " << code << " " << clientname << msg;
 	std::string resp = ss.str();
 	if(send(fd, resp.c_str(), resp.size(),0) == -1)
 		std::cerr << "send() failure" << std::endl;
@@ -215,30 +224,32 @@ bool	Server::isCompared(std::string const &str1, std::string const &str2)
 	}
 	return true;
 }
-bool	Server::authentication(int fildD, std::vector<std::string> command)
-{
-	//Check if the pass is the first command is passed
-	Client &cli = get_client_by_fd(Clients, fildD);
-	// if (!isCompared(command[0], "pass") && !cli.get_has_pass())
-	// 	return false;
-	//execute the authentication
-	if (isCompared(command[0], "pass"))
-		ft_pass(fildD, command);
-	else if (isCompared(command[1], "nick"))
-		ft_nick(fildD, command);
-	else if (isCompared(command[1], "user"))
-		ft_user(fildD, command);
-	//Check if all authentication passed seccessfuly
-	if (cli.get_has_pass() && cli.get_has_user() && cli.get_has_nick())
-		return true;
-	return false;
-}
+
+// bool	Server::authentication(int fildD, std::vector<std::string> command)
+// {
+// 	//Check if the pass is the first command is passed
+// 	Client &cli = get_client_by_fd(Clients, fildD);
+// 	// if (!isCompared(command[0], "pass") && !cli.get_has_pass())
+// 	// 	return false;
+// 	//execute the authentication
+// 	if (isCompared(command[0], "pass"))
+// 		ft_pass(fildD, command);
+// 	else if (isCompared(command[1], "nick"))
+// 		ft_nick(fildD, command);
+// 	else if (isCompared(command[1], "user"))
+// 		ft_user(fildD, command);
+// 	//Check if all authentication passed seccessfuly
+// 	if (cli.get_has_pass() && cli.get_has_user() && cli.get_has_nick())
+// 		return true;
+// 	return false;
+// }
+
 void	Server::execute(int fildD, std::vector<std::string> command)
 {
 	// kick join part privmsg topic mode user nick pass quit invite
 	size_t i = -1;
 	while (++i < Clients.size())
-		if (Clients[i].getfd() == fildD)
+		if (Clients[i]->getfd() == fildD)
 			break ;
 	if (isCompared(command[0], "pong"))
 		return ;
@@ -250,7 +261,7 @@ void	Server::execute(int fildD, std::vector<std::string> command)
 		ft_user(fildD, command);
 	else if (isCompared(command[0], "quit"))
 		ft_quit(fildD, command);
-	else if (!Clients[i].get_auth())
+	else if (!Clients[i]->get_auth())
 	{
 		std::cout << "Client " << i + 1 << " needs to authenticate first\n";
 		return;
@@ -270,7 +281,7 @@ void	Server::execute(int fildD, std::vector<std::string> command)
 	else if (isCompared(command[0], "invite"))
 		invite(fildD, command, i);
 	else
-		Server::senderror(421, Clients[i].get_nickname(), fildD, " " + command[0] + " :Unknown command\n");
+		Server::senderror(421, Clients[i]->get_nickname(), fildD, " " + command[0] + " :Unknown command\n");
 }
 
 void	Server::ReceiveNewData(int fd)
@@ -327,19 +338,20 @@ void	Server::Closefds()
 
 void	Server::rmclient(int fd)
 {
-
 	for (size_t i = 0; i < Clients.size(); i++)
 	{
-		if (Clients[i].getfd() == fd)
+		if (Clients[i]->getfd() == fd)
 		{
 			for (size_t j = 0; j < Channels.size(); j++)
 			{
-				Channels[j].remove_client(&Clients[i]);
+				if (is_in_channel(*Clients[i], Channels[j]))
+					Channels[j].remove_client(Clients[i]);
 				if (Channels[j].get_clients()->empty())
 					Channels.erase(Channels.begin() + j);
 			}
-			//Clients[i].leave_all_channels();
-			Clients[i].reset();
+			//Clients[i]->leave_all_channels();
+			Clients[i]->reset();
+			delete Clients[i];
 			Clients.erase(Clients.begin() + i);
 			break;
 		}
