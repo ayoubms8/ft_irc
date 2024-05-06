@@ -40,7 +40,6 @@ public:
 	void			show_clients();
 
 	bool			authentication(int fildD, std::vector<std::string> command);
-	bool			isCompared(std::string const &str1, std::string const &str2);
 	static bool		is_op_in(Client &cli, Channel &channel);
 	void			ft_pass(int fd, std::vector<std::string> cmd);
 	void			ft_nick(int fd, std::vector<std::string> cmd);
@@ -61,3 +60,5 @@ public:
 	Server &operator=(const Server &copy);	
 	~Server();
 };
+
+bool			isCompared(std::string const &str1, std::string const &str2);

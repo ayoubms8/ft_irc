@@ -6,7 +6,7 @@ SRCS_DIR := src/
 CC := c++
 CFLAGS := -Wall -Wextra -Werror -std=c++98
 
-SRC := Authenticate.cpp Channel.cpp Client.cpp Commands.cpp Server.cpp main.cpp
+SRC := Bot.cpp Authenticate.cpp Channel.cpp Client.cpp Commands.cpp Server.cpp main.cpp
 
 OBJ	:= $(SRC:.cpp=.o)
 
@@ -18,7 +18,7 @@ $(NAME): $(OBJS)
 	$(CC) -g $(OBJS) -o $(NAME) -I inc
 	@echo "build complete!"
 
-$(OBJS_DIR)%.o: $(SRCS_DIR)%.cpp inc/Server.hpp inc/Client.hpp inc/Channel.hpp
+$(OBJS_DIR)%.o: $(SRCS_DIR)%.cpp inc/Server.hpp inc/Client.hpp inc/Channel.hpp inc/Bot.hpp
 	@mkdir -p $(OBJS_DIR)
 	$(CC) -g $(CFLAGS) -c $< -o $@
 

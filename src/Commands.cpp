@@ -1,7 +1,6 @@
 
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
-#include <sstream>
 
 bool Server::is_in_channel(Client &cli, Channel &channel)
 {
@@ -263,11 +262,7 @@ void Server::invite(int fd, std::vector<std::string> cmd, int i)
 					if (is_in_channel(*Clients[k], Channels[j]))
 						return;
 					Channels[j].add_invite(Clients[k]->get_nickname());
-					std::stringstream ss;
-					ss << ":" + Server::get_servername() + " INVITE " << cmd[1] << " :" << cmd[2] << "\r\n";
-					std::string resp = ss.str();
-					if (send(Clients[k]->getfd(), resp.c_str(), resp.size(), 0) == -1)
-						std::cerr << "send() failure" << std::endl;
+					Server::sendmsg(Clients[k]->getfd(), ":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " INVITE " + cmd[1] + " " + cmd[2] + "\r\n");
 					return;
 				}
 			}
@@ -299,7 +294,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 			if (cmd[2].empty())
 			{
 				std::string resp;
-				resp = ":" + Server::get_servername() + " MODE " + cmd[1] + " ";
+				resp = ":" + Server::get_servername() + " 324 " + Clients[i]->get_nickname() + " " + cmd[1] + " :+";
 				for (std::map<char, bool>::iterator it = modes.begin(); it != modes.end(); it++)
 				{
 					if ((*it).second == true)

@@ -1,5 +1,6 @@
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
+#include "../inc/Bot.hpp"
 #include <sstream>
 #include <arpa/inet.h> // Add this line to include the header file later
 
@@ -72,9 +73,12 @@ void	Server::Serverinit(int port, std::string password)
 	ser_pol_fd.events = POLLIN;
 	ser_pol_fd.revents = 0;
 	this->pollfds.push_back(ser_pol_fd);
-	this->servername = "127.0.0.1";
+	this->servername = inet_ntoa(addr.sin_addr);
 	std::cout << "Waiting to accept a connection...\n";
-
+	Bot bot;
+	if (bot.connect_to_server((struct sockaddr*)&addr, this->Port, this->password))
+		bot.authenticate();
+	this->pollfds.push_back(bot.get_fd());
 	while (Server::Signal == false)
 	{
 		if((poll(pollfds.data(), pollfds.size(), -1) == -1) && Server::Signal == false)
@@ -85,6 +89,10 @@ void	Server::Serverinit(int port, std::string password)
 			{
 				if (i == 0)
 					AcceptNewClient();
+				else if (i == 1)
+				{
+					bot.receive_message();
+				}
 				else
 					ReceiveNewData(pollfds[i].fd);
 			}
@@ -151,7 +159,6 @@ std::vector<std::string> parse_cmd(std::string str)
     std::vector<std::string> cmd;
     std::string::size_type pos = 0;
 
-    // Remove trailing "\r\n"
     if ((pos = str.find("\r\n")) != std::string::npos)
     {
         str.erase(pos, 2);
@@ -160,18 +167,15 @@ std::vector<std::string> parse_cmd(std::string str)
 	{
 		str.erase(pos, 1);
 	}
-    // Extract the prefix if it exists
     if (str[0] == ':')
     {
         pos = str.find(" ");
         cmd.push_back(str.substr(1, pos - 1));
         str.erase(0, pos + 1);
     }
-
-    // Extract the command and parameters
     while ((pos = str.find(" ")) != std::string::npos)
     {
-        if (str[0] == ':') // The rest of the line is a trailing parameter
+        if (str[0] == ':')
         {
             cmd.push_back(str.substr(1));
             break;
@@ -213,7 +217,7 @@ void Server::sendmsg(int fd, std::string msg)
 	if(send(fd, msg.c_str(), msg.size(),0) == -1)
 		std::cerr << "send() failure" << std::endl;
 }
-bool	Server::isCompared(std::string const &str1, std::string const &str2)
+bool	isCompared(std::string const &str1, std::string const &str2)
 {
 	if (str1.length() != str2.length())
 		return false;
