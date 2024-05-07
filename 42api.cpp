@@ -41,17 +41,21 @@ size_t get_user_data(char *buffer, size_t itemSize, size_t nitems, void *ignoret
     size_t bytes = itemSize * nitems;
 
     std::map<std::string, std::string> data;
-    std::set<std::string, std::string> vec;
+    std::set<std::string> vec;
 
     data = parseJSON(std::string((char *)buffer));
 
     for(std::map<std::string, std::string>::iterator iter = data.begin() ; iter != data.end() ; iter++) {
         if (iter->first == "first_name")
-            vec.push_back(iter->second);
+            vec.insert(iter->second.erase(iter->second.find("\"")));
         else if (iter->first == "last_name")
-            vec.push_back(iter->second);
+            vec.insert(iter->second.erase(iter->second.find("\"")));
         else if (iter->first == "location")
-            vec.push_back(iter->second);
+            vec.insert(iter->second.erase(iter->second.find("\"")));
+    }
+
+    for(std::set<std::string>::iterator seter = vec.begin() ; seter != vec.end() ; seter++) {
+        std::cout << *seter << std::endl;
     }
 
     return bytes;
