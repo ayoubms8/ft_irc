@@ -90,9 +90,7 @@ void	Server::Serverinit(int port, std::string password)
 				if (i == 0)
 					AcceptNewClient();
 				else if (i == 1)
-				{
 					bot.receive_message();
-				}
 				else
 					ReceiveNewData(pollfds[i].fd);
 			}

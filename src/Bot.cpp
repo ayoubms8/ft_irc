@@ -190,5 +190,24 @@ void Bot::execute(std::vector<std::string> cmd)
 			send_message("JOIN " + channel);
 			send_message("PRIVMSG " + channel + " :Hello, I am Botto. I am here to entertain you. Type !joke to get a joke.");
 		}
+		else if (cmd2[0] == "!part")
+		{
+			std::string channel = cmd2[1];
+			send_message("PRIVMSG " + channel + " :MY final message. Goodbye!");
+			send_message("PART " + channel);
+		}
+		else if (cmd2[0] == "!info")
+		{
+			// if (cmd2.size() == 1)
+			// 	info of cmd[2] from 42 api here;
+			// else
+			// {
+			// 	info from 42 api here of cmd2[1];
+			// }
+		}
+		else if (cmd2[0] == "!help")
+		{
+			send_message("PRIVMSG " + cmd[2] + " :Commands available: !joke, !join <channel>, !part, !info <42username>, !help");
+		}
 	}
 }
