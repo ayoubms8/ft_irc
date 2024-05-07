@@ -18,64 +18,15 @@ Bot::Bot()
 {
 	this->set_nickname("Botto");
 	this->set_username("Botto");
-	_jokes.push_back("9alok hada wahd kan ghadi ota7 1");
-	_jokes.push_back("9alok hada wahd kan ghadi ota7 2");
-	_jokes.push_back("9alok hada wahd kan ghadi ota7 3");
-	_jokes.push_back("9alok hada wahd kan ghadi ota7 4");
-	_jokes.push_back("9alok hada wahd kan ghadi ota7 5");
+	_jokes.push_back("Why did the tomato turn red? Because it saw the salad dressing!");
+	_jokes.push_back("What do you call a fake noodle? An impasta!");
+	_jokes.push_back("I told my wife she was drawing her eyebrows too high. She looked surprised.");
+	_jokes.push_back("Why did the bicycle fall over? Because it was two-tired!");
+	_jokes.push_back("What do you call a bear with no teeth? A gummy bear!");
+	_jokes.push_back("Why did the math book look sad? Because it had too many problems.");
+	_jokes.push_back("How do you catch a squirrel? Climb a tree and act like a nut!");
+	_jokes.push_back("Why don't eggs tell jokes? Because they might crack up!");
 }
-
-// Bot::Bot(std::string const &server, int port, std::string const &channel, std::string &nick) : _server(server), _port(port), _channel(channel), _nick(nick)
-// {
-// 	_jokes.push_back("9alok hada wahd kan ghadi ota7 1");
-// 	_jokes.push_back("9alok hada wahd kan ghadi ota7 2");
-// 	_jokes.push_back("9alok hada wahd kan ghadi ota7 3");
-// 	_jokes.push_back("9alok hada wahd kan ghadi ota7 4");
-// 	_jokes.push_back("9alok hada wahd kan ghadi ota7 5");
-// }
-
-// bool Bot::connect_to_server(struct sockaddr *serv_addr, int port, std::string pass)
-// {
-// 	struct pollfd polfd;
-// 	polfd.fd = socket(AF_INET, SOCK_STREAM, 0);
-// 	if (polfd.fd < 0)
-// 	{
-// 		std::cerr << "Failed to open the socket" << std::endl;
-// 		return false;
-// 	}
-// 	polfd.events = POLLIN;
-// 	polfd.revents = 0;
-// 	// if (fcntl(polfd.fd, F_SETFL, O_NONBLOCK) < 0)
-// 	// {
-// 	// 	std::cerr << "Failed to set the socket to non-blocking" << std::endl;
-// 	// 	return false;
-// 	// }
-// 	if (connect(polfd.fd, serv_addr, sizeof(*serv_addr)) < 0)
-// 	{
-// 		if (errno == EINPROGRESS)
-// 		{
-// 			// Connection is in progress
-// 			int ret = poll(&polfd, 1, 10000);
-// 			if (ret > 0)
-// 			{
-// 				int so_error;
-// 				socklen_t len = sizeof(so_error);
-// 				getsockopt(polfd.fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
-// 				if (so_error == 0)
-// 					std::cout << "Connected" << std::endl;
-// 				else
-// 					return (std::cerr << "Failed to connect" << std::endl, false);
-// 			}
-// 			else
-// 				return (std::cerr << "Failed to connect" << std::endl, false);
-// 		}
-// 		else
-// 			return (std::cerr << "Failed to connect" << std::endl, false);
-// 	}
-// 	this->_port = port;
-// 	this->_pass = pass;
-// 	return true;
-// }
 
 struct pollfd	Bot::get_fd() const
 {
@@ -182,13 +133,21 @@ void Bot::execute(std::vector<std::string> cmd)
 		{
 			cmd2.push_back(token);
 		}
-		if (cmd2[0] == "!joke" || cmd2[0] == ":!joke")
+		if (isCompared(cmd2[0], "!joke") || isCompared(cmd2[0], ":!joke"))
 			send_message("PRIVMSG " + cmd[2] + " :" + get_random_joke());
-		else if (cmd2[0] == "!join")
+		else if (isCompared(cmd2[0], "!join"))
 		{
 			std::string channel = cmd2[1];
 			send_message("JOIN " + channel);
 			send_message("PRIVMSG " + channel + " :Hello, I am Botto. I am here to entertain you. Type !joke to get a joke.");
 		}
+		// if (cmd2[0] == "!joke" || cmd2[0] == ":!joke")
+		// 	send_message("PRIVMSG " + cmd[2] + " :" + get_random_joke());
+		// else if (cmd2[0] == "!join")
+		// {
+		// 	std::string channel = cmd2[1];
+		// 	send_message("JOIN " + channel);
+		// 	send_message("PRIVMSG " + channel + " :Hello, I am Botto. I am here to entertain you. Type !joke to get a joke.");
+		// }
 	}
 }

@@ -52,6 +52,10 @@ size_t get_user_data(char *buffer, size_t itemSize, size_t nitems, void *ignoret
             vec.insert(iter->second.erase(iter->second.find("\"")));
         else if (iter->first == "location")
             vec.insert(iter->second.erase(iter->second.find("\"")));
+        // else if (iter->first == "level")
+        //     vec.insert(iter->second.erase(iter->second.find("\"")));
+        // else if (iter->first == "grade")
+        //     vec.insert(iter->second.erase(iter->second.find("\"")));
     }
 
     for(std::set<std::string>::iterator seter = vec.begin() ; seter != vec.end() ; seter++) {
