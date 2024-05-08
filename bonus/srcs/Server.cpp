@@ -1,9 +1,10 @@
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
+#include "../inc/Bot.hpp"
 #include <sstream>
 #include <arpa/inet.h>
 
-bool Server::Signal_detected = false;
+bool Server::Signal = false;
 std::string Server::creationdate;
 std::string Server::servername;
 
@@ -78,9 +79,13 @@ void	Server::Serverinit(int port, std::string password)
 	this->pollfds.push_back(ser_pol_fd);
 	this->servername = inet_ntoa(addr.sin_addr);
 	std::cout << "Waiting to accept a connection...\n";
-	while (Server::Signal_detected == false)
+	Bot bot;
+	if (bot.connect_to_server((struct sockaddr*)&addr, this->Port, this->password))
+		bot.authenticate();
+	this->pollfds.push_back(bot.get_fd());
+	while (Server::Signal == false)
 	{
-		if((poll(pollfds.data(), pollfds.size(), -1) < 0) && Server::Signal_detected == false)
+		if((poll(pollfds.data(), pollfds.size(), -1) < 0) && Server::Signal == false)
 			throw(std::runtime_error("poll() FAILED"));	
 		for (size_t i = 0; i < pollfds.size(); i++)
 		{
@@ -88,6 +93,8 @@ void	Server::Serverinit(int port, std::string password)
 			{
 				if (i == 0)
 					AcceptNewClient();
+				else if (i == 1)
+					bot.receive_message();
 				else
 					ReceiveNewData(pollfds[i].fd);
 			}
@@ -282,7 +289,7 @@ void	Server::ReceiveNewData(int fd)
 void	Server::SignalHandler(int signum)
 {
 	(void)signum;
-	Signal_detected = true;
+	Signal = true;
 }
 
 void	Server::Closefds()

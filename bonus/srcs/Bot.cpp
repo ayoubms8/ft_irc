@@ -1,17 +1,4 @@
 #include "../inc/Bot.hpp"
-#include <cstdlib>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <string>
-#include <strings.h>
-#include <sys/_endian.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <iostream>
-#include <stdexcept>
-#include <fcntl.h>
-#include <ctime>
-#include <sstream>
 
 std::string dad_jokes() 
 {
@@ -33,14 +20,6 @@ Bot::Bot()
 {
 	this->set_nickname("Botto");
 	this->set_username("Botto");
-	_jokes.push_back("Why did the tomato turn red? Because it saw the salad dressing!");
-	_jokes.push_back("What do you call a fake noodle? An impasta!");
-	_jokes.push_back("I told my wife she was drawing her eyebrows too high. She looked surprised.");
-	_jokes.push_back("Why did the bicycle fall over? Because it was two-tired!");
-	_jokes.push_back("What do you call a bear with no teeth? A gummy bear!");
-	_jokes.push_back("Why did the math book look sad? Because it had too many problems.");
-	_jokes.push_back("How do you catch a squirrel? Climb a tree and act like a nut!");
-	_jokes.push_back("Why don't eggs tell jokes? Because they might crack up!");
 }
 
 struct pollfd	Bot::get_fd() const
@@ -52,16 +31,16 @@ bool Bot::connect_to_server(struct sockaddr* serv_addr, int port, std::string pa
 	struct pollfd polfd;
     polfd.fd = socket(AF_INET, SOCK_STREAM, 0);
     if (polfd.fd < 0) {
-        std::cerr << "Failed to open the socket" << std::endl;
+        std::cerr << "FAILED TO CREATE SOCKET" << std::endl;
         return false;
     }
     if (connect(polfd.fd, serv_addr, sizeof(*serv_addr)) < 0) {
-        std::cerr << "Failed to connect" << std::endl;
+        std::cerr << "connect() FAILED" << std::endl;
         return false;
     }
 	if (fcntl(polfd.fd, F_SETFL, O_NONBLOCK) < 0)
 	{
-		std::cerr << "Failed to set non-blocking" << std::endl;
+		std::cerr << "FAILED TO SET SOCKET TO NON-BLOCKING" << std::endl;
 		return false;
 	}
 	polfd.events = POLLIN;
@@ -78,7 +57,7 @@ void Bot::receive_message()
 	std::string::size_type pos;
 	int ret = recv(_polfd.fd, buffer, 1024, 0);
 	if (ret == -1)
-		throw(std::runtime_error("recv() failure"));
+		throw(std::runtime_error("recv() FAILED"));
 	if (ret == 0)
 	{
 		std::cout << "Client disconnected\n";
@@ -87,7 +66,6 @@ void Bot::receive_message()
 	{
 		buffer[ret] = '\0';
 		std::string str(buffer);
-		std::cout << "Received by bot: " << str << std::endl;
 		pos = str.find("\r\n");
 		while (pos != std::string::npos)
 		{
@@ -125,19 +103,12 @@ void Bot::send_message(std::string const &message)
 {
 	std::string full_message = message + "\r\n";
 	if (send(_polfd.fd, full_message.c_str(), full_message.length(), 0) < 0)
-		std::cerr << "Failed to send message" << std::endl;
+		std::cerr << "send() FAILED" << std::endl;
 }
 
 Bot::~Bot()
 {
 	close(_polfd.fd);
-}
-
-std::string Bot::get_random_joke()
-{
-	std::srand(std::time(NULL));
-	int i = std::rand() % _jokes.size();
-	return _jokes[i];
 }
 
 void Bot::execute(std::vector<std::string> cmd)

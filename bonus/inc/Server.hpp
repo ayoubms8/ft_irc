@@ -11,7 +11,7 @@ private:
 	int							Port;
 	std::string					password;
 	static std::string			servername;
-	static bool					Signal_detected;
+	static bool					Signal;
 	std::deque<Client *>		Clients;
 	std::vector<Channel>		Channels;
 	std::vector<struct pollfd>	pollfds;
