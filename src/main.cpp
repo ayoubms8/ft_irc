@@ -1,7 +1,13 @@
 #include "../inc/Server.hpp"
 
+void leaks()
+{
+	system("leaks ircserv");
+}
+
 int main(int ac, char **av)
 {
+	atexit(leaks);
 	Server ser;
 	if (ac != 3 || !isdigit(*av[1]) || atoi(av[1]) < 0 || atoi(av[1]) > 65535 ){
 		std::cerr << "Usage: ./server [port] [password]" << std::endl;

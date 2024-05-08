@@ -11,8 +11,23 @@
 #include <stdexcept>
 #include <fcntl.h>
 #include <ctime>
-#include <poll.h>
 #include <sstream>
+
+std::string dad_jokes() 
+{
+    std::string command = "curl -s -X GET 'https://icanhazdadjoke.com/' -H 'Accept: text/plain'";
+    char buffer[128];
+    std::string result;
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        result += buffer;
+    }
+    pclose(pipe);
+    return result;
+}
 
 Bot::Bot()
 {
@@ -44,6 +59,11 @@ bool Bot::connect_to_server(struct sockaddr* serv_addr, int port, std::string pa
         std::cerr << "Failed to connect" << std::endl;
         return false;
     }
+	if (fcntl(polfd.fd, F_SETFL, O_NONBLOCK) < 0)
+	{
+		std::cerr << "Failed to set non-blocking" << std::endl;
+		return false;
+	}
 	polfd.events = POLLIN;
 	polfd.revents = 0;
     this->_port = port;
@@ -122,43 +142,32 @@ std::string Bot::get_random_joke()
 
 void Bot::execute(std::vector<std::string> cmd)
 {
-	std::vector<std::string> cmd2;
+	std::vector<std::string> args;
 	if (cmd.size() == 0)
 		return;
-	else if (cmd[1] == "PRIVMSG")
+	else if (isCompared(cmd[1], "privmsg"))
 	{
 		std::stringstream ss(cmd[3]);
 		std::string	token;
 		while (std::getline(ss, token, ' '))
+			args.push_back(token);
+		if (isCompared(args[0], "!joke") || isCompared(args[0], ":!joke"))
+			send_message("PRIVMSG " + cmd[2] + " :" + dad_jokes());
+		else if (isCompared(args[0], "!join"))
 		{
-			cmd2.push_back(token);
-		}
-		if (isCompared(cmd2[0], "!joke") || isCompared(cmd2[0], ":!joke"))
-			send_message("PRIVMSG " + cmd[2] + " :" + get_random_joke());
-		else if (isCompared(cmd2[0], "!join"))
-		{
-			std::string channel = cmd2[1];
+			std::string channel = args[1];
 			send_message("JOIN " + channel);
 			send_message("PRIVMSG " + channel + " :Hello, I am Botto. I am here to entertain you. Type !joke to get a joke.");
 		}
-		else if (cmd2[0] == "!part")
+		else if (isCompared(args[0],"!part") || isCompared(args[0], ":!part"))
 		{
-			std::string channel = cmd2[1];
+			std::string channel = cmd[2];
 			send_message("PRIVMSG " + channel + " :MY final message. Goodbye!");
 			send_message("PART " + channel);
 		}
-		else if (cmd2[0] == "!info")
+		else if (isCompared(args[0],"!help") || isCompared(args[0], ":!help"))
 		{
-			// if (cmd2.size() == 1)
-			// 	info of cmd[2] from 42 api here;
-			// else
-			// {
-			// 	info from 42 api here of cmd2[1];
-			// }
-		}
-		else if (cmd2[0] == "!help")
-		{
-			send_message("PRIVMSG " + cmd[2] + " :Commands available: !joke, !join <channel>, !part, !info <42username>, !help");
+			send_message("PRIVMSG " + cmd[2] + " :Commands available: !joke, !join <channel>, !part, !help");
 		}
 	}
 }

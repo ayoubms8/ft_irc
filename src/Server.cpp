@@ -34,6 +34,11 @@ Server::Server()
 
 Server::~Server()
 {
+	Closefds();
+	for (size_t i = 0; i < Clients.size(); i++)
+	{
+		delete Clients[i];
+	}
 }
 
 void	Server::show_clients()
@@ -97,20 +102,6 @@ void	Server::Serverinit(int port, std::string password)
 		}
 		//show_clients();
 	}
-	Closefds();
-}
-
-Server::Server(const Server &copy)
-{
-	*this = copy;
-}
-
-Server &Server::operator=(const Server &copy)
-{
-	this->Port = copy.Port;
-	this->pollfds = copy.pollfds;
-	this->Clients = copy.Clients;
-	return (*this);
 }
 
 void	Server::AcceptNewClient()

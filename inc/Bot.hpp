@@ -16,6 +16,7 @@
 
 std::vector<std::string> parse_cmd(std::string str);
 bool	isCompared(std::string const &str1, std::string const &str2);
+std::string dad_jokes(const char* cmd);
 
 class Bot : public Client
 {

@@ -56,8 +56,6 @@ public:
 	Client 			*get_client_by_fd(std::deque<Client *> &clients, int fd);
 	bool 			is_in_channel(Client &cli, Channel &channel);
 	Server();
-	Server(const Server &copy);
-	Server &operator=(const Server &copy);	
 	~Server();
 };
 
