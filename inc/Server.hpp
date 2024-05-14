@@ -11,15 +11,15 @@ private:
 	int							Port;
 	std::string					password;
 	static std::string			servername;
-	static bool					Signal_detected;
+	static int					Signal_detected;
 	std::deque<Client *>		Clients;
 	std::vector<Channel>		Channels;
 	std::vector<struct pollfd>	pollfds;
 	static std::string			creationdate;
 public:
 	void			Serverinit(int port, std::string password);
-	void			AcceptNewClient();
-	void			ReceiveNewData(int fd);
+	void			accept_client();
+	void			receive_message(int fd);
 	void			execute(int fd, std::vector<std::string> cmd);
 	static void		SignalHandler(int signum);
 	void			Closefds();

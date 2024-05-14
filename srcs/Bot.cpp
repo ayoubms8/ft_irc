@@ -3,7 +3,7 @@
 std::string dad_jokes() 
 {
     std::string command = "curl -s -X GET 'https://icanhazdadjoke.com/' -H 'Accept: text/plain'";
-    char buffer[128];
+    char buffer[200];
     std::string result;
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {

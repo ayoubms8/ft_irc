@@ -1,10 +1,9 @@
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
 #include "../inc/Bot.hpp"
-#include <sstream>
 #include <arpa/inet.h>
 
-bool Server::Signal = false;
+int Server::Signal_detected = 0;
 std::string Server::creationdate;
 std::string Server::servername;
 
@@ -41,69 +40,60 @@ Server::~Server()
 	}
 }
 
-void	Server::show_clients()
-{
-	std::cout << "Clients connected: " << Clients.size() << std::endl;
-	for (size_t i = 0; i < Clients.size(); i++)
-	{
-		std::cout << "Client " << i + 1 << " fd: " << Clients[i]->getfd()  << " username : " << Clients[i]->get_username() << " pass: " << Clients[i]->get_has_pass() << " nickname: " << Clients[i]->get_nickname() << " auth: " << Clients[i]->get_auth() << std::endl;
-		std::cout << "has_user: " << Clients[i]->get_has_user() << " has_nick: " << Clients[i]->get_has_nick() << std::endl;
-	}
-}
-
 void	Server::Serverinit(int port, std::string password)
 {
 	this->Port = port;
 	this->password = password;
-	struct sockaddr_in addr;
+	struct sockaddr_in ser_addr;
 	struct pollfd ser_pol_fd;
 
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(this->Port);
-	addr.sin_addr.s_addr = INADDR_ANY;
+	ser_addr.sin_family = AF_INET;
+	ser_addr.sin_port = htons(this->Port);
+	ser_addr.sin_addr.s_addr = INADDR_ANY;
 
 	ser_pol_fd.fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (ser_pol_fd.fd < 0)
 		throw (std::runtime_error("FAILED TO CREATE SOCKET"));
-	int en = 1;
-	if (setsockopt(ser_pol_fd.fd, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)))
+	int val = 1;
+	if (setsockopt(ser_pol_fd.fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)))
 		throw(std::runtime_error("FAILED TO MAKE ADDRESS REUSABLE"));
 	if (fcntl(ser_pol_fd.fd, F_SETFL, O_NONBLOCK) < 0)
 		throw(std::runtime_error("FAILED TO MAKE SOCKET NON-BLOCKING"));
-	if (bind(ser_pol_fd.fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+	if (bind(ser_pol_fd.fd, (struct sockaddr *)&ser_addr, sizeof(ser_addr)) < 0)
 		throw(std::runtime_error("FAILED to bind socket"));
 	if (listen(ser_pol_fd.fd, SOMAXCONN) < 0)
 		throw(std::runtime_error("listen() FAILED"));
 	ser_pol_fd.events = POLLIN;
 	ser_pol_fd.revents = 0;
 	this->pollfds.push_back(ser_pol_fd);
-	this->servername = inet_ntoa(addr.sin_addr);
+	this->servername = inet_ntoa(ser_addr.sin_addr);
 	std::cout << "Waiting to accept a connection...\n";
 	Bot bot;
-	if (bot.connect_to_server((struct sockaddr*)&addr, this->Port, this->password))
+	if (bot.connect_to_server((struct sockaddr*)&ser_addr, this->Port, this->password))
 		bot.authenticate();
 	this->pollfds.push_back(bot.get_fd());
-	while (Server::Signal == false)
+	while (!Signal_detected)
 	{
-		if((poll(pollfds.data(), pollfds.size(), -1) < 0) && Server::Signal == false)
-			throw(std::runtime_error("poll() FAILED"));	
+		if(poll(pollfds.data(), pollfds.size(), -1) < 0)
+			throw(std::runtime_error("poll() FAILED"));
+		if (Signal_detected)
+			return ;
 		for (size_t i = 0; i < pollfds.size(); i++)
 		{
 			if (pollfds[i].revents & POLLIN)
 			{
 				if (i == 0)
-					AcceptNewClient();
+					accept_client();
 				else if (i == 1)
 					bot.receive_message();
 				else
-					ReceiveNewData(pollfds[i].fd);
+					receive_message(pollfds[i].fd);
 			}
 		}
-		//show_clients();
 	}
 }
 
-void	Server::AcceptNewClient()
+void	Server::accept_client()
 {
 	struct sockaddr_in addr;
 	socklen_t addr_len = sizeof(addr);
@@ -177,18 +167,16 @@ std::vector<std::string> parse_cmd(std::string str)
 
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
-	std::stringstream ss;
-	ss << ":" + Server::get_servername() + " " << code << " " << clientname << msg;
-	std::string resp = ss.str();
+	std::string resp;
+	resp = ":" + Server::get_servername() + " " + std::to_string(code) + " " + clientname + msg;;
 	if(send(fd, resp.c_str(), resp.size(),0) < 0)
 		std::cerr << "send() FAILED" << std::endl;
 }
 
 void Server::sendresponse(int code, std::string clientname, int fd, std::string msg)
 {
-	std::stringstream ss;
-	ss << ":" + Server::get_servername() + " " << code << " " << clientname << msg;
-	std::string resp = ss.str();
+	std::string resp;
+	resp = ":" + Server::get_servername() + " " + std::to_string(code) + " " + clientname + msg;
 	if(send(fd, resp.c_str(), resp.size(),0) < 0)
 		std::cerr << "send() FAILED" << std::endl;
 }
@@ -250,7 +238,7 @@ void	Server::execute(int fildD, std::vector<std::string> command)
 		Server::senderror(421, Clients[i]->get_nickname(), fildD, " " + command[0] + " :Unknown command\n");
 }
 
-void	Server::ReceiveNewData(int fd)
+void	Server::receive_message(int fd)
 {
 	char buffer[1024];
 	std::string::size_type pos;
@@ -286,10 +274,10 @@ void	Server::ReceiveNewData(int fd)
 	}
 }
 
-void	Server::SignalHandler(int signum)
+void	Server::SignalHandler(int signal)
 {
-	(void)signum;
-	Signal = true;
+	(void)signal;
+	Signal_detected = 1;
 }
 
 void	Server::Closefds()
