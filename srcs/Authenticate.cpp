@@ -12,11 +12,10 @@ void Server::sendWelcomeMessages(Client &cli)
 	std::string channelModes = "iklot";
 	std::string featureList = "CHANTYPES=# PREFIX=(o)@ CHANMODES=o,k,l,t,i";
 
-	Server::sendresponse(001, nick, cli.getfd(), " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\r\n");
-	Server::sendresponse(002, nick, cli.getfd(), " :Your host is " + Server::servername + ", running version " + version + "\r\n");
-	Server::sendresponse(003, nick, cli.getfd(), " :This server was created " + creationdate + "\r\n");
-	Server::sendresponse(004, nick, cli.getfd(), " :" + Server::servername + " " + version + " " + userModes + " " + channelModes + "\r\n");
-	//Server::sendresponse(005, nick, cli.getfd(), " :" + this.servername + " " + featureList + " :are supported by this server" + "\r\n");
+	Server::sendmsg(cli.getfd(), "001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\r\n");
+	Server::sendmsg(cli.getfd(), "002 " + nick + " :Your host is " + Server::servername + ", running version " + version + "\r\n");
+	Server::sendmsg(cli.getfd(), "003 " + nick + " :This server was created " + Server::creationdate + "\r\n");
+	Server::sendmsg(cli.getfd(), "004 " + nick + " : " + Server::servername + " " + version + " " + userModes + " " + channelModes + "\r\n");
 }
 
 std::string get_users_in_channel(Channel channel)
@@ -59,7 +58,9 @@ void Server::ft_pass(int fd, std::vector<std::string> cmd)
 		return;
 	}
 	else
+	{
 		cli->set_has_pass(true);
+	}
 }
 
 void Server::ft_nick(int fd, std::vector<std::string> cmd)
@@ -90,6 +91,9 @@ void Server::ft_nick(int fd, std::vector<std::string> cmd)
 	{
 		cli->set_has_nick(true);
 		cli->set_nickname(cmd[1]);
+		for (size_t i = 0; i < Channels.size(); i++)
+			if (is_in_channel(*cli, Channels[i]))
+				Server::broadcastmsg(":" + cli->get_nickname() + "!" + cli->get_username() + "@" + cli->get_ip() + " NICK :" + cmd[1] + "\r\n", Channels[i]);
 		if (!cli->get_has_user())
 			return;
 		if (!cli->get_auth())

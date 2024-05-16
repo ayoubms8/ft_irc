@@ -110,21 +110,47 @@ Bot::~Bot()
 {
 	close(_polfd.fd);
 }
+std::vector<std::string> split_cmd(std::string &cmd)
+{
+	std::vector<std::string> args;
+	std::string::size_type pos = cmd.find(" ");
+	while (pos != std::string::npos)
+	{
+		args.push_back(cmd.substr(0, pos));
+		cmd.erase(0, pos + 1);
+		pos = cmd.find(" ");
+	}
+	args.push_back(cmd);
+	args.push_back("");
+	return args;
+}
+
+void get_sender_info(std::string &senderinfo, Client &sender)
+{
+	std::string::size_type pos = senderinfo.find("!~");
+	sender.set_nickname(senderinfo.substr(0, pos));
+	senderinfo.erase(0, pos + 1);
+	pos = senderinfo.find("@");
+	sender.set_username(senderinfo.substr(0, pos));
+	senderinfo.erase(0, pos + 1);
+	sender.set_ip(senderinfo);
+}
 
 void Bot::execute(std::vector<std::string> cmd)
 {
-	std::vector<std::string> args;
 	if (cmd.size() == 0)
 		return;
-	else if (isCompared(cmd[1], "privmsg"))
+	else if (isCompared(cmd[0], "privmsg"))
 	{
-		std::stringstream ss(cmd[3]);
-		std::string	token;
-		while (std::getline(ss, token, ' '))
-			args.push_back(token);
-		if (isCompared(args[0], "!joke") || isCompared(args[0], ":!joke"))
-			send_message("PRIVMSG " + cmd[2] + " :" + dad_jokes());
-		else if (isCompared(args[0], "!join"))
+		Client sender = Client();
+		get_sender_info(cmd.back(), sender);
+		std::string recipient = cmd[1];
+		std::vector<std::string> args = split_cmd(cmd[2]);
+		if ((isCompared(args[0], "!joke") || isCompared(args[0], ":!joke")) && recipient[0] == '#')
+			send_message("PRIVMSG " + recipient + " :" + dad_jokes());
+		else if (isCompared(args[0], "!joke") || isCompared(args[0], ":!joke"))
+			send_message("PRIVMSG " + sender.get_nickname() + " :" + dad_jokes());
+		else if (isCompared(args[0], "!join") || isCompared(args[0], ":!join"))
 		{
 			std::string channel = args[1];
 			send_message("JOIN " + channel);
@@ -132,13 +158,13 @@ void Bot::execute(std::vector<std::string> cmd)
 		}
 		else if (isCompared(args[0],"!part") || isCompared(args[0], ":!part"))
 		{
-			std::string channel = cmd[2];
+			std::string channel = recipient;
 			send_message("PRIVMSG " + channel + " :MY final message. Goodbye!");
 			send_message("PART " + channel);
 		}
+		else if ((isCompared(args[0],"!help") || isCompared(args[0], ":!help")) && recipient[0] == '#')
+			send_message("PRIVMSG " + recipient + " :Commands available: !joke, !join <channel>, !part, !help");
 		else if (isCompared(args[0],"!help") || isCompared(args[0], ":!help"))
-		{
-			send_message("PRIVMSG " + cmd[2] + " :Commands available: !joke, !join <channel>, !part, !help");
-		}
+			send_message("PRIVMSG " + sender.get_nickname() + " :Commands available: !joke, !join <channel>, !part, !help");
 	}
 }

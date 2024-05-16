@@ -135,6 +135,7 @@ std::vector<std::string> parse_cmd(std::string str)
 {
     std::vector<std::string> cmd;
     std::string::size_type pos = 0;
+	std::string tmp = "";
 
     if ((pos = str.find("\r\n")) != std::string::npos)
         str.erase(pos, 2);
@@ -143,7 +144,7 @@ std::vector<std::string> parse_cmd(std::string str)
     if (str[0] == ':')
     {
         pos = str.find(" ");
-        cmd.push_back(str.substr(1, pos - 1));
+        tmp += str.substr(1, pos - 1);
         str.erase(0, pos + 1);
     }
     while ((pos = str.find(" ")) != std::string::npos)
@@ -157,11 +158,14 @@ std::vector<std::string> parse_cmd(std::string str)
         {
             cmd.push_back(str.substr(0, pos));
             str.erase(0, pos + 1);
+			while (str[0] == ' ')
+                str.erase(0, 1);
         }
     }
     if (!str.empty())
         cmd.push_back(str);
 	cmd.push_back("");
+	cmd.push_back(tmp);
     return cmd;
 }
 
@@ -169,14 +173,6 @@ void Server::senderror(int code, std::string clientname, int fd, std::string msg
 {
 	std::string resp;
 	resp = ":" + Server::get_servername() + " " + std::to_string(code) + " " + clientname + msg;;
-	if(send(fd, resp.c_str(), resp.size(),0) < 0)
-		std::cerr << "send() FAILED" << std::endl;
-}
-
-void Server::sendresponse(int code, std::string clientname, int fd, std::string msg)
-{
-	std::string resp;
-	resp = ":" + Server::get_servername() + " " + std::to_string(code) + " " + clientname + msg;
 	if(send(fd, resp.c_str(), resp.size(),0) < 0)
 		std::cerr << "send() FAILED" << std::endl;
 }
@@ -245,10 +241,8 @@ void	Server::receive_message(int fd)
 	int ret = recv(fd, buffer, 1024, 0);
 	if (ret < 0)
 		throw(std::runtime_error("recv() FAILED"));
-	if (ret == 0)
-	{
+	else if (ret == 0)
 		rmclient(fd);
-	}
 	else
 	{
 		buffer[ret] = '\0';

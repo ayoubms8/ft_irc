@@ -25,7 +25,6 @@ public:
 	void			Closefds();
 	void			rmclient(int fd);
 	static void		senderror(int code, std::string clientname, int fd, std::string msg);
-	static void 	sendresponse(int code, std::string clientname, int fd, std::string msg);
 	static void		sendWelcomeMessages(Client &cli);
 	static void 	ch_join_message(Client &cli, Channel channel);
 	static void 	broadcastmsg(std::string msg, Channel &channel);
@@ -40,8 +39,10 @@ public:
 	void			ft_user(int fd, std::vector<std::string> cmd);
 	void			ft_quit(int fd, std::vector<std::string> cmd);
 	void			join(int fd, std::vector<std::string> cmd, int i);
-	void			invite_only_join(int fd, std::vector<std::string> cmd, Client &cli, Channel &channel);
+	void			join_1(std::string &chnl, std::vector<std::string> &keys, size_t &k, int i, int fd);
+	void			invite_only_join(int fd, Client &cli, Channel &channel);
 	void			part(int fd, std::vector<std::string> cmd, int i);
+	void			part_1(std::string &chnl, int i, int fd);
 	void			privmsg(int fd, std::vector<std::string> cmd, int i);
 	void			topic(int fd, std::vector<std::string> cmd, int i);
 	void			mode(int fd, std::vector<std::string> cmd, int i);

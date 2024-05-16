@@ -152,6 +152,9 @@ std::vector<std::string> Channel::get_invite_list() const
 
 void Channel::add_invite(std::string client_name)
 {
+	for(std::vector<std::string>::iterator it = this->invite_list.begin(); it != this->invite_list.end(); it++)
+		if (*it == client_name)
+			return;
 	this->invite_list.push_back(client_name);
 }
 
