@@ -382,12 +382,12 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 						else if (cmd[2][k] == 't')
 						{
 							Channels[j].set_mode('t', true);
-							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " :+t\r\n", Channels[j]);
+							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +t\r\n", Channels[j]);
 						}
 						else if (cmd[2][k] == 'i')
 						{
 							Channels[j].set_mode('i', true);
-							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " :+i\r\n", Channels[j]);
+							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +i\r\n", Channels[j]);
 						}
 						else if (cmd[2][k] == 'l')
 						{
@@ -415,12 +415,14 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 						}
 					}
 				} //
-				else if (cmd[2][k] == '-')
+				if (cmd[2][k] == '-')
 				{
-					while (++k && k < cmd[2].size() && cmd[2][k] != '+')
+					while (++k && k < cmd[2].size())
 					{
 						if (cmd[2][k] == '-')
 							continue;
+						if (cmd[2][k] == '+' && k--)
+							break;
 						if (cmd[2][k] == 'o')
 						{
 							if (cmd[3 + params].empty())

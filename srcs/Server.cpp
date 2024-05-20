@@ -72,7 +72,7 @@ void	Server::Serverinit(int port, std::string password)
 	if (bot.connect_to_server((struct sockaddr*)&ser_addr, this->Port, this->password))
 		bot.authenticate();
 	this->pollfds.push_back(bot.get_fd());
-	while (!Signal_detected)
+	while (true)
 	{
 		if(poll(pollfds.data(), pollfds.size(), -1) < 0)
 			throw(std::runtime_error("poll() FAILED"));
@@ -196,7 +196,6 @@ bool	isCompared(std::string const &str1, std::string const &str2)
 
 void	Server::execute(int fildD, std::vector<std::string> command)
 {
-	// kick join part privmsg topic mode user nick pass quit invite
 	size_t i = -1;
 	while (++i < Clients.size())
 		if (Clients[i]->getfd() == fildD)

@@ -7,15 +7,12 @@ int main(int ac, char **av)
 		std::cerr << "Usage: ./ircserv <port[1024, 49151]> <password>" << std::endl;
 		return 1;
 	}
-
-
-	std::cout << "---- SERVER ----" << std::endl;
 	try{
 		signal(SIGINT, Server::SignalHandler);
 		signal(SIGQUIT, Server::SignalHandler);
 		ser.Serverinit(atoi(av[1]), av[2]);
 	}
-	catch(const std::exception& e){
+	catch(std::exception& e){
 		ser.Closefds();//
 		std::cerr << e.what() << std::endl;
 	}
