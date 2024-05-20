@@ -1,4 +1,5 @@
 #include "../inc/Server.hpp"
+#include <csignal>
 
 int main(int ac, char **av)
 {
