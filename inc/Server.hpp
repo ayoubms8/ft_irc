@@ -44,6 +44,7 @@ public:
 	void			part(int fd, std::vector<std::string> cmd, int i);
 	void			part_1(std::string &chnl, int i, int fd);
 	void			privmsg(int fd, std::vector<std::string> cmd, int i);
+	void			privmsg_1(std::string &receiver, std::string &msg, int i, int fd);
 	void			topic(int fd, std::vector<std::string> cmd, int i);
 	void			mode(int fd, std::vector<std::string> cmd, int i);
 	void			kick(int fd, std::vector<std::string> cmd, int i);

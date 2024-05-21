@@ -45,7 +45,10 @@ std::vector<std::string> split(std::string str, char delim)
 	std::string item;
 
 	while (std::getline(ss, item, delim))
-		result.push_back(item);
+	{
+		if (std::find(result.begin(), result.end(), item) == result.end())
+			result.push_back(item);
+	}
 	return result;
 }
 
@@ -105,6 +108,8 @@ void Server::join(int fd, std::vector<std::string> cmd, int i)
 	std::vector<std::string> keys;
 	if (!cmd[2].empty())
 		keys = split(cmd[2], ',');
+	else
+		keys.push_back("");
 	size_t k = 0;
 	for (size_t it = 0; it < Chnls.size(); it++)
 		join_1(Chnls[it], keys, k, i, fd);
@@ -138,42 +143,49 @@ void Server::part(int fd, std::vector<std::string> cmd, int i)
 		part_1(Chnls[it], i, fd);
 }
 
-void Server::privmsg(int fd, std::vector<std::string> cmd, int i)
+void Server::privmsg_1(std::string &receiver, std::string &msg, int i, int fd)
 {
-	if (cmd[2].empty())
+	if (msg.empty())
 	{
 		Server::senderror(412, Clients[i]->get_nickname(), fd, " :No text to send\r\n");
 		return;
 	}
-	else if (cmd[1].empty())
+	else if (receiver.empty())
 	{
 		Server::senderror(411, Clients[i]->get_nickname(), fd, " :No recipient given\r\n");
 		return;
 	}
-	else if (cmd[1][0] == '#')
+	else if (receiver[0] == '#')
 	{
 		for (size_t j = 0; j < Channels.size(); j++)
 		{
-			if (Channels[j].get_name() == cmd[1] && is_in_channel(*Clients[i], Channels[j]))
+			if (Channels[j].get_name() == receiver && is_in_channel(*Clients[i], Channels[j]))
 			{
 				for (size_t k = 0; k < Clients.size(); k++)
 					if (is_in_channel(*Clients[k], Channels[j]) && Clients[k]->getfd() != fd)
-						Server::sendmsg(Clients[k]->getfd(), ":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " PRIVMSG " + cmd[1] + " :" + cmd[2] + "\r\n");
+						Server::sendmsg(Clients[k]->getfd(), ":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " PRIVMSG " + receiver + " :" + msg + "\r\n");
 				return;
 			}
 		}
-		Server::senderror(403, Clients[i]->get_nickname(), fd, " " + cmd[1] + " :No such channel\r\n");
+		Server::senderror(403, Clients[i]->get_nickname(), fd, " " + receiver + " :No such channel\r\n");
 	}
 	for (size_t j = 0; j < Clients.size(); j++)
 	{
-		if (Clients[j]->get_nickname() == cmd[1])
+		if (Clients[j]->get_nickname() == receiver)
 		{
-			if (Clients[j]->getfd() != fd)
-				Server::sendmsg(Clients[j]->getfd(), ":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " PRIVMSG " + cmd[1] + " :" + cmd[2] + "\r\n");
+			Server::sendmsg(Clients[j]->getfd(), ":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " PRIVMSG " + receiver + " :" + msg + "\r\n");
 			return;
 		}
 	}
 	Server::senderror(401, Clients[i]->get_nickname(), fd, " :No such nick/channel\r\n");
+}
+
+void Server::privmsg(int fd, std::vector<std::string> cmd, int i)
+{
+	std::vector<std::string> receivers = split(cmd[1], ',');
+
+	for (size_t it = 0; it < receivers.size(); it++)
+		privmsg_1(receivers[it], cmd[2], i, fd);
 }
 
 void Server::topic(int fd, std::vector<std::string> cmd, int i)
@@ -414,7 +426,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							params++;
 						}
 					}
-				} //
+				}
 				if (cmd[2][k] == '-')
 				{
 					while (++k && k < cmd[2].size())

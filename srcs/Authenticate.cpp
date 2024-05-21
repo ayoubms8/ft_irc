@@ -149,7 +149,6 @@ void Server::ft_quit(int fd, std::vector<std::string> cmd)
 				if (Channels[j].get_clients()->empty() || (Channels[j].get_clients()->size() == 1 && Channels[j].get_clients()->begin()->first->get_nickname() == "Botto"))
 					Channels.erase(Channels.begin() + j);
 			}
-			// Clients[i]->leave_all_channels();
 			Clients[i]->reset();
 			delete Clients[i];
 			Clients.erase(Clients.begin() + i);

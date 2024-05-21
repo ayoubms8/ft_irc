@@ -152,6 +152,7 @@ std::vector<std::string> parse_cmd(std::string str)
         if (str[0] == ':')
         {
             cmd.push_back(str.substr(1));
+			str.clear();
             break;
         }
         else

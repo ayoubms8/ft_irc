@@ -31,10 +31,6 @@ public:
 	bool					get_has_nick() const;
 	bool					get_has_user() const;
 	bool					get_has_pass() const;
-	// std::vector<Channel*>	get_channels() const;
-	// void					join_channel(Channel *channel);
-	// void					leave_channel(std::string channel_name);
-	// void					leave_all_channels();
 	void					reset();
 	void					set_auth(bool auth);
 	void					set_has_pass(bool pass);
