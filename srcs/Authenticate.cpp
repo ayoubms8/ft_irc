@@ -12,10 +12,10 @@ void Server::sendWelcomeMessages(Client &cli)
 	std::string channelModes = "iklot";
 	std::string featureList = "CHANTYPES=# PREFIX=(o)@ CHANMODES=o,k,l,t,i";
 
-	Server::sendmsg(cli.getfd(), "001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\r\n");
-	Server::sendmsg(cli.getfd(), "002 " + nick + " :Your host is " + Server::servername + ", running version " + version + "\r\n");
-	Server::sendmsg(cli.getfd(), "003 " + nick + " :This server was created " + Server::creationdate + "\r\n");
-	Server::sendmsg(cli.getfd(), "004 " + nick + " : " + Server::servername + " " + version + " " + userModes + " " + channelModes + "\r\n");
+	Server::sendmsg(cli.getfd(), ":127.0.0.1 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\r\n");
+	Server::sendmsg(cli.getfd(), ":127.0.0.1 002 " + nick + " :Your host is " + Server::servername + ", running version " + version + "\r\n");
+	Server::sendmsg(cli.getfd(), ":127.0.0.1 003 " + nick + " :This server was created " + Server::creationdate + "\r\n");
+	Server::sendmsg(cli.getfd(), ":127.0.0.1 004 " + nick + " : " + Server::servername + " " + version + " " + userModes + " " + channelModes + "\r\n");
 }
 
 std::string get_users_in_channel(Channel channel)

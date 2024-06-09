@@ -113,7 +113,6 @@ void Server::join(int fd, std::vector<std::string> cmd, int i)
 	size_t k = 0;
 	for (size_t it = 0; it < Chnls.size(); it++)
 		join_1(Chnls[it], keys, k, i, fd);
-	return;
 }
 
 void Server::part_1(std::string &chnl, int i, int fd)
@@ -314,7 +313,7 @@ void Server::invite(int fd, std::vector<std::string> cmd, int i)
 					return;
 				}
 			}
-			Server::senderror(401, Clients[i]->get_nickname(), fd, " :No such nick/channel\r\n");
+			Server::senderror(401, Clients[i]->get_nickname(), fd, " :No such nick\r\n");
 			return;
 		}
 	}
