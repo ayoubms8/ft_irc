@@ -12,10 +12,10 @@ void Server::sendWelcomeMessages(Client &cli)
 	std::string channelModes = "iklot";
 	std::string featureList = "CHANTYPES=# PREFIX=(o)@ CHANMODES=o,k,l,t,i";
 
-	Server::sendmsg(cli.getfd(), ":127.0.0.1 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\r\n");
-	Server::sendmsg(cli.getfd(), ":127.0.0.1 002 " + nick + " :Your host is " + Server::servername + ", running version " + version + "\r\n");
-	Server::sendmsg(cli.getfd(), ":127.0.0.1 003 " + nick + " :This server was created " + Server::creationdate + "\r\n");
-	Server::sendmsg(cli.getfd(), ":127.0.0.1 004 " + nick + " : " + Server::servername + " " + version + " " + userModes + " " + channelModes + "\r\n");
+	Server::sendmsg(cli.getfd(), "001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\r\n");
+	Server::sendmsg(cli.getfd(), "002 " + nick + " :Your host is " + Server::servername + ", running version " + version + "\r\n");
+	Server::sendmsg(cli.getfd(), "003 " + nick + " :This server was created " + Server::creationdate + "\r\n");
+	Server::sendmsg(cli.getfd(), "004 " + nick + " : " + Server::servername + " " + version + " " + userModes + " " + channelModes + "\r\n");
 }
 
 std::string get_users_in_channel(Channel channel)
@@ -54,7 +54,8 @@ void Server::ft_pass(int fd, std::vector<std::string> cmd)
 	Client *cli = get_client_by_fd(Clients, fd);
 	if (cmd[1].empty() || cmd[1] != this->password)
 	{
-		Server::senderror(464, cli->get_nickname(), cli->getfd(), " :Password incorrect\n");
+		Server::sendmsg(fd , ":"+Server::servername + " 464 :Password incorrect\r\n");
+		Server::rmclient(fd);
 		return;
 	}
 	else
@@ -68,20 +69,20 @@ void Server::ft_nick(int fd, std::vector<std::string> cmd)
 	Client *cli = get_client_by_fd(Clients, fd);
 	if (!cli->get_has_pass())
 	{
-		Server::senderror(451, cli->get_nickname(), cli->getfd(), " :Enter password first\n");
+		Server::sendmsg(fd, ":"+Server::servername + " 451 " + cli->get_nickname() + " :Enter password first\r\n");
 		return;
 	}
 	size_t j;
 	if (cmd[1].empty())
 	{
-		Server::senderror(431, cli->get_nickname(), cli->getfd(), " :No nickname given\n");
+		Server::sendmsg(fd, ":"+Server::servername + " 461 " + cli->get_nickname() + " NICK :Not enough parameters\r\n");
 		return;
 	}
 	for (j = 0; j < Clients.size(); j++)
 	{
 		if (isCompared(Clients[j]->get_nickname(), cmd[1]) && Clients[j]->getfd() != cli->getfd())
 		{
-			Server::senderror(433, cmd[1], cli->getfd(), " :Nickname is already in use\n");
+			Server::sendmsg(fd, ":"+Server::servername + " 433 " + cli->get_nickname() + " " + cmd[1] + " :Nickname is already in use\r\n");
 			return;
 		}
 	}
@@ -89,11 +90,19 @@ void Server::ft_nick(int fd, std::vector<std::string> cmd)
 		cli->set_nickname(cmd[1]);
 	else
 	{
+		bool has_ch = false;
 		cli->set_has_nick(true);
-		cli->set_nickname(cmd[1]);
 		for (size_t i = 0; i < Channels.size(); i++)
+		{
 			if (is_in_channel(*cli, Channels[i]))
+			{
+				has_ch = true;
 				Server::broadcastmsg(":" + cli->get_nickname() + "!" + cli->get_username() + "@" + cli->get_ip() + " NICK :" + cmd[1] + "\r\n", Channels[i]);
+			}
+		}
+		if (!has_ch && cli->get_auth())
+			Server::sendmsg(fd, ":" + cli->get_nickname() + "!" + cli->get_username() + "@" + cli->get_ip() + " NICK :" + cmd[1] + "\r\n");
+		cli->set_nickname(cmd[1]);
 		if (!cli->get_has_user())
 			return;
 		if (!cli->get_auth())
@@ -109,17 +118,17 @@ void Server::ft_user(int fd, std::vector<std::string> cmd)
 	Client *cli = get_client_by_fd(Clients, fd);
 	if (!cli->get_has_pass())
 	{
-		Server::senderror(451, cli->get_nickname(), cli->getfd(), " :Enter password first\n");
+		Server::sendmsg(fd, ":"+Server::servername + " 451 " + cli->get_nickname() + " :Enter password first\r\n");
 		return;
 	}
 	if (cli->get_has_user())
 	{
-		Server::senderror(462, cli->get_nickname(), cli->getfd(), " :You may not reregister\n");
+		Server::sendmsg(fd, ":"+Server::servername + " 462 " + cli->get_nickname() + " :You may not reregister\r\n");
 		return;
 	}
 	else if (cmd[1].empty() || cmd[2].empty() || cmd[3].empty() || cmd[4].empty())
 	{
-		Server::senderror(461, cli->get_nickname(), cli->getfd(), " :Not enough parameters\n");
+		Server::sendmsg(fd, ":"+Server::servername + " 461 " + cli->get_nickname() + " USER :Not enough parameters\r\n");
 		return;
 	}
 	else
