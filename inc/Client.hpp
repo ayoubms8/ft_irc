@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <deque>
+#include <algorithm>
 
 class Channel;
 
