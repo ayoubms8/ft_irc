@@ -1,6 +1,8 @@
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
 #include <sstream>
+#include <cstring>
+#include <string.h>
 
 bool Server::is_in_channel(Client &cli, Channel &channel)
 {
@@ -54,7 +56,16 @@ std::vector<std::string> split(std::string str, char delim)
 
 void Server::join_1(std::string &chnl, std::vector<std::string> &keys, size_t &k, int i, int fd)
 {
-	if (chnl.empty() || chnl[0] != '#' || chnl.size() < 2)
+	if (chnl == "0")
+	{
+		for (int j = Channels.size() - 1; j >= 0; j--)
+		{
+			if (is_in_channel(*Clients[i], Channels[j]))
+				part_1(Channels[j].get_name(), i, fd);
+		}
+		return ;
+	}
+	else if ((chnl.empty() || chnl[0] != '#' || chnl.size() < 2))
 	{
 		Server::senderror(403, Clients[i]->get_nickname(), fd, " " + chnl + " :No such channel\r\n");
 		return;
@@ -115,7 +126,7 @@ void Server::join(int fd, std::vector<std::string> cmd, int i)
 		join_1(Chnls[it], keys, k, i, fd);
 }
 
-void Server::part_1(std::string &chnl, int i, int fd)
+void Server::part_1(const std::string &chnl, int i, int fd)
 {
 	if (chnl.empty() || chnl[0] != '#' || chnl.size() < 2)
 	{
@@ -337,7 +348,6 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 	{
 		if (Channels[j].get_name() == cmd[1])
 		{
-			std::map<char, bool> modes = Channels[j].get_modes();
 			if (!is_in_channel(*Clients[i], Channels[j]))
 			{
 				Server::senderror(442, Clients[i]->get_nickname(), fd, " " + Channels[j].get_name() + " :You're not on that channel\r\n");
@@ -345,15 +355,23 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 			}
 			if (cmd[2].empty())
 			{
-				std::string resp;
-				resp = ":" + Server::get_servername() + " 324 " + Clients[i]->get_nickname() + " " + cmd[1] + " :+";
+				std::map<char, bool> modes = Channels[j].get_modes();
+				std::stringstream resp;
+				resp << ":" << Server::get_servername() << " 324 " << Clients[i]->get_nickname() << " " << cmd[1] << " :+";
 				for (std::map<char, bool>::iterator it = modes.begin(); it != modes.end(); it++)
 				{
 					if ((*it).second == true)
-						resp += (*it).first;
+						resp << (*it).first;
 				}
-				resp += "\r\n";
-				Server::sendmsg(fd, resp);
+				resp << " " << Channels[j].get_key();
+				resp << " " << Channels[j].get_limit();
+				resp << "\r\n";
+				Server::sendmsg(fd, resp.str());
+				return;
+			}
+			if (!is_op_in(*Clients[i], Channels[j]))
+			{
+				Server::senderror(482, Clients[i]->get_nickname(), fd, " " + cmd[1] + " :You're not channel operator\r\n");
 				return;
 			}
 			for (size_t k = 0; k < cmd[2].size(); k++)
@@ -364,11 +382,6 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 					{
 						if (cmd[2][k] == '+')
 							continue;
-						if (!is_op_in(*Clients[i], Channels[j]) && (cmd[2][k] == 'o' || cmd[2][k] == 'l' || cmd[2][k] == 'k'))
-						{
-							Server::senderror(482, Clients[i]->get_nickname(), fd, " " + cmd[1] + " :You're not channel operator\r\n");
-							continue;
-						}
 						if (cmd[2][k] == 'o')
 						{
 							if (cmd[3 + params].empty())
@@ -383,22 +396,24 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 									Channels[j].set_operator(Clients[l]);
 									Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +o :" + cmd[3 + params] + "\r\n", Channels[j]);
 									params++;
-									return;
+									continue;
 								}
 							}
 							Server::senderror(441, Clients[i]->get_nickname(), Clients[i]->getfd(), " :They aren't on that channel\r\n");
 							params++;
 							continue;
 						}
-						else if (cmd[2][k] == 't')
+						else if (cmd[2][k] == 't' && Channels[j].get_modes()['t'] == false)
 						{
 							Channels[j].set_mode('t', true);
 							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +t\r\n", Channels[j]);
+							continue;
 						}
-						else if (cmd[2][k] == 'i')
+						else if (cmd[2][k] == 'i' && Channels[j].get_modes()['i'] == false)
 						{
 							Channels[j].set_mode('i', true);
 							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +i\r\n", Channels[j]);
+							continue;
 						}
 						else if (cmd[2][k] == 'l')
 						{
@@ -411,6 +426,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							Channels[j].set_limit(std::atoi(cmd[3 + params].c_str()));
 							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +l " + cmd[3 + params] + "\r\n", Channels[j]);
 							params++;
+							continue;
 						}
 						else if (cmd[2][k] == 'k')
 						{
@@ -419,13 +435,26 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 								Server::senderror(461, Clients[i]->get_nickname(), fd, " MODE :Not enough parameters\r\n");
 								continue;
 							}
+							else if (Channels[j].get_key() == cmd[3 + params])
+							{
+								Server::senderror(467, Clients[i]->get_nickname(), fd, " MODE :Channel key already set\r\n");
+								params++;
+								continue;
+							}
+							else if (strlen(cmd[3 + params].c_str()) < 1 || strpbrk(cmd[3 + params].c_str(), " \t\n\r\v\f"))
+							{
+								Server::senderror(467, Clients[i]->get_nickname(), fd, " MODE :Bad channel key\r\n");
+								params++;
+								continue;
+							}
 							Channels[j].set_mode('k', true);
 							Channels[j].set_key(cmd[3 + params]);
 							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +k " + cmd[3 + params] + "\r\n", Channels[j]);
 							params++;
+							continue;
 						}
 					}
-				}
+				} //
 				if (cmd[2][k] == '-')
 				{
 					while (++k && k < cmd[2].size())
@@ -448,36 +477,60 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 									Channels[j].remove_operator(Clients[l]);
 									Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " -o :" + cmd[3 + params] + "\r\n", Channels[j]);
 									params++;
-									return;
+									continue;
 								}
 							}
 							Server::senderror(441, Clients[i]->get_nickname(), fd, " :They aren't on that channel\r\n");
 							params++;
 							continue;
 						}
-						else if (cmd[2][k] == 't')
+						else if (cmd[2][k] == 't' && Channels[j].get_modes()['t'] == true)
 						{
 							Channels[j].set_mode('t', false);
 							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " -t\r\n", Channels[j]);
+							continue;
 						}
-						else if (cmd[2][k] == 'i')
+						else if (cmd[2][k] == 'i' && Channels[j].get_modes()['i'] == true)
 						{
 							Channels[j].set_mode('i', false);
 							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " -i\r\n", Channels[j]);
+							continue;
 						}
-						else if (cmd[2][k] == 'l')
+						else if (cmd[2][k] == 'l' && Channels[j].get_modes()['l'] == true)
 						{
 							Channels[j].set_mode('l', false);
 							Channels[j].set_limit(-1);
 							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " -l\r\n", Channels[j]);
+							continue;
 						}
 						else if (cmd[2][k] == 'k')
 						{
+							if (cmd[3 + params].empty())
+							{
+								Server::senderror(461, Clients[i]->get_nickname(), fd, " MODE :Not enough parameters\r\n");
+								continue;
+							}
+							else if (Channels[j].get_modes()['k'] == false)
+							{
+								Server::senderror(467, Clients[i]->get_nickname(), fd, " MODE :Channel key not set\r\n");
+								params++;
+								continue;
+							}
+							else if (Channels[j].get_key() != cmd[3 + params])
+							{
+								Server::senderror(467, Clients[i]->get_nickname(), fd, " MODE :Bad Channel key\r\n");
+								params++;
+								continue;
+							}
 							Channels[j].set_mode('k', false);
 							Channels[j].set_key("");
 							Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " -k\r\n", Channels[j]);
+							params++;
+							continue;
 						}
 					}
+					if (cmd[2][k] == '+')
+						k--;
 				}
 			}
 			return;

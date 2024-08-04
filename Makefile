@@ -4,7 +4,7 @@ OBJS_DIR = objs/
 SRCS_DIR := srcs/
 
 CC := c++
-CFLAGS := -Wall -Wextra -Werror -std=c++98
+CFLAGS := -g -Wall -Wextra -Werror -std=c++98
 
 SRC := Authenticate.cpp Channel.cpp Client.cpp Commands.cpp Server.cpp main.cpp Bot.cpp
 

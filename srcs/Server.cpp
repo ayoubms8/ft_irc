@@ -2,6 +2,7 @@
 #include "../inc/Channel.hpp"
 #include "../inc/Bot.hpp"
 #include <arpa/inet.h>
+#include <csignal>
 
 int Server::Signal_detected = 0;
 std::string Server::creationdate;
@@ -164,7 +165,9 @@ std::vector<std::string> parse_cmd(std::string str)
         }
     }
     if (!str.empty())
+	{
         cmd.push_back(str);
+	}
 	cmd.push_back("");
 	cmd.push_back(tmp);
     return cmd;
@@ -172,9 +175,9 @@ std::vector<std::string> parse_cmd(std::string str)
 
 void Server::senderror(int code, std::string clientname, int fd, std::string msg)
 {
-	std::string resp;
-	resp = ":" + Server::get_servername() + " " + std::to_string(code) + " " + clientname + msg;;
-	if(send(fd, resp.c_str(), resp.size(),0) < 0)
+	std::stringstream resp;
+	resp << ":" << Server::get_servername() << " " << code << " " << clientname << msg;;
+	if(send(fd, resp.str().c_str(), resp.str().size(), 0) < 0)
 		std::cerr << "send() FAILED" << std::endl;
 }
 
@@ -270,8 +273,8 @@ void	Server::receive_message(int fd)
 
 void	Server::SignalHandler(int signal)
 {
-	(void)signal;
-	Signal_detected = 1;
+	if (signal != SIGPIPE)
+		Signal_detected = 1;
 }
 
 void	Server::Closefds()

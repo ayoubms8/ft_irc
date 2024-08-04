@@ -4,6 +4,8 @@
 #include <poll.h>
 #include <sstream>
 #include <fcntl.h>
+#include <cstdio>
+#include <stdexcept>
 
 
 std::vector<std::string> parse_cmd(std::string str);
