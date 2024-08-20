@@ -52,10 +52,14 @@ void Server::ch_join_message(Client &cli, Channel channel)
 void Server::ft_pass(int fd, std::vector<std::string> cmd)
 {
 	Client *cli = get_client_by_fd(Clients, fd);
+	if (cli->get_has_pass())
+	{
+		Server::sendmsg(fd, ":"+Server::servername + " 462 " + cli->get_nickname() + " :You may not reregister\r\n");
+		return;
+	}
 	if (cmd[1].empty() || cmd[1] != this->password)
 	{
 		Server::sendmsg(fd , ":"+Server::servername + " 464 :Password incorrect\r\n");
-		Server::rmclient(fd);
 		return;
 	}
 	else
@@ -78,6 +82,17 @@ void Server::ft_nick(int fd, std::vector<std::string> cmd)
 		Server::sendmsg(fd, ":"+Server::servername + " 461 " + cli->get_nickname() + " NICK :Not enough parameters\r\n");
 		return;
 	}
+	size_t it = cmd[1].find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]\\`_^{|}-");
+	if (it != std::string::npos)
+	{
+		if (it == 0)
+		{
+			Server::sendmsg(fd, ":"+Server::servername + " 432 " + cli->get_nickname() + " :Erroneous nickname\r\n");
+			return;
+		}
+		cmd[1] = cmd[1].substr(0, it);
+	}
+	cmd[1] = cmd[1].substr(0, 15);
 	for (j = 0; j < Clients.size(); j++)
 	{
 		if (isCompared(Clients[j]->get_nickname(), cmd[1]) && Clients[j]->getfd() != cli->getfd())

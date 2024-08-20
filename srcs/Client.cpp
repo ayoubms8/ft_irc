@@ -2,7 +2,7 @@
 #include "../inc/Server.hpp"
 #include "../inc/Channel.hpp"
 
-Client::Client() : is_auth(false), has_nick(false), has_user(false)
+Client::Client() : is_auth(false), has_nick(false), has_user(false), has_pass(false)
 {
 }
 
@@ -21,7 +21,7 @@ void	Client::reset()
 	this->ip.clear();
 }
 
-Client::Client(int fd, std::string ip) :fd(fd), ip(ip), is_auth(false), has_nick(false), has_user(false)
+Client::Client(int fd, std::string ip) :fd(fd), ip(ip), is_auth(false), has_nick(false), has_user(false), has_pass(false)
 {
 }
 
