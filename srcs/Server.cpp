@@ -167,8 +167,6 @@ std::vector<std::string> parse_cmd(std::string str)
     }
     if (!str.empty())
 	{
-		//check :
-		// std::cout << "CMD ==> " << str << std::endl;
 		if (str[0] == ':')
 			str = str.substr(1);
         cmd.push_back(str);

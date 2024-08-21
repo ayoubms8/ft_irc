@@ -72,7 +72,7 @@ void Server::join_1(std::string &chnl, std::vector<std::string> &keys, size_t &k
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
 	{
-		if (Channels[j].get_name() == chnl)
+		if (isCompared(Channels[j].get_name(), chnl))
 		{
 			if (is_in_channel(*Clients[i], Channels[j]))
 			{
@@ -94,13 +94,10 @@ void Server::join_1(std::string &chnl, std::vector<std::string> &keys, size_t &k
 				}
 				k++;
 			}
-			if (Channels[j].get_modes()['l'] == true)
+			if (Channels[j].get_modes()['l'] == true && Channels[j].get_clients()->size() >= Channels[j].get_limit())
 			{
-				if (Channels[j].get_clients()->size() >= Channels[j].get_limit())
-				{
-					Server::senderror(471, Clients[i]->get_nickname(), fd, " :Cannot join channel (+l)\r\n");
-					return;
-				}
+				Server::senderror(471, Clients[i]->get_nickname(), fd, " :Cannot join channel (+l)\r\n");
+				return;
 			}
 			Channels[j].add_client(Clients[i]);
 			return;
@@ -135,7 +132,7 @@ void Server::part_1(const std::string &chnl, int i, int fd)
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
 	{
-		if (Channels[j].get_name() == chnl)
+		if (isCompared(Channels[j].get_name(), chnl))
 		{
 			Channels[j].remove_client(Clients[i]);
 			if (Channels[j].get_clients()->empty() || (Channels[j].get_clients()->size() == 1 && Channels[j].get_clients()->begin()->first->get_nickname() == "Botto"))
@@ -169,7 +166,7 @@ void Server::privmsg_1(std::string &receiver, std::string &msg, int i, int fd)
 	{
 		for (size_t j = 0; j < Channels.size(); j++)
 		{
-			if (Channels[j].get_name() == receiver && is_in_channel(*Clients[i], Channels[j]))
+			if (isCompared(Channels[j].get_name(), receiver) && is_in_channel(*Clients[i], Channels[j]))
 			{
 				for (size_t k = 0; k < Clients.size(); k++)
 					if (is_in_channel(*Clients[k], Channels[j]) && Clients[k]->getfd() != fd)
@@ -207,7 +204,7 @@ void Server::topic(int fd, std::vector<std::string> cmd, int i)
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
 	{
-		if (Channels[j].get_name() == cmd[1])
+		if (isCompared(Channels[j].get_name(), cmd[1]))
 		{
 			if (!is_in_channel(*Clients[i], Channels[j]))
 			{
@@ -259,7 +256,7 @@ void Server::kick(int fd, std::vector<std::string> cmd, int i)
 	for (size_t j = 0; j < Channels.size(); j++)
 	{
 		std::map<Client *, bool> *clis = Channels[j].get_clients();
-		if (Channels[j].get_name() == cmd[1])
+		if (isCompared(Channels[j].get_name(), cmd[1]))
 		{
 			if (!is_in_channel(*Clients[i], Channels[j]))
 			{
@@ -301,7 +298,7 @@ void Server::invite(int fd, std::vector<std::string> cmd, int i)
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
 	{
-		if (Channels[j].get_name() == cmd[2])
+		if (isCompared(Channels[j].get_name(), cmd[2]))
 		{
 			if (!is_in_channel(*Clients[i], Channels[j]))
 			{
@@ -346,7 +343,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 	}
 	for (size_t j = 0; j < Channels.size(); j++)
 	{
-		if (Channels[j].get_name() == cmd[1])
+		if (isCompared(Channels[j].get_name(), cmd[1]))
 		{
 			if (!is_in_channel(*Clients[i], Channels[j]))
 			{
