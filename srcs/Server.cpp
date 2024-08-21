@@ -3,6 +3,7 @@
 #include "../inc/Bot.hpp"
 #include <arpa/inet.h>
 #include <csignal>
+#include <string>
 
 int Server::Signal_detected = 0;
 std::string Server::creationdate;
@@ -167,6 +168,9 @@ std::vector<std::string> parse_cmd(std::string str)
     if (!str.empty())
 	{
 		//check :
+		// std::cout << "CMD ==> " << str << std::endl;
+		if (str[0] == ':')
+			str = str.substr(1);
         cmd.push_back(str);
 	}
 	cmd.push_back("");

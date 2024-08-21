@@ -363,7 +363,10 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 					if ((*it).second == true)
 						resp << (*it).first;
 				}
-				resp << " " << Channels[j].get_key();
+				if (is_op_in(*Clients[i], Channels[j]))
+					resp << " " << Channels[j].get_key();
+				else
+					resp << " *";
 				resp << " " << Channels[j].get_limit();
 				resp << "\r\n";
 				Server::sendmsg(fd, resp.str());
