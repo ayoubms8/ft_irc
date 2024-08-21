@@ -145,29 +145,20 @@ std::map<char, bool> Channel::get_modes() const
 	return this->modes;
 }
 
-std::vector<std::string> Channel::get_invite_list() const
+std::deque<Client*> Channel::get_invite_list() const
 {
 	return this->invite_list;
 }
 
-void Channel::add_invite(std::string client_name)
+void Channel::add_invite(Client *cli)
 {
-	for(std::vector<std::string>::iterator it = this->invite_list.begin(); it != this->invite_list.end(); it++)
-		if (*it == client_name)
+	for(std::deque<Client*>::iterator it = this->invite_list.begin(); it != this->invite_list.end(); it++)
+		if ((*it)->get_nickname() == cli->get_nickname())
 			return;
-	this->invite_list.push_back(client_name);
+	this->invite_list.push_back(cli);
 }
 
-void Channel::remove_invite(std::string client_name)
+void Channel::remove_invite(Client *cli)
 {
-	std::vector<std::string>::iterator it = this->invite_list.begin();
-	while (it != this->invite_list.end())
-	{
-		if (*it == client_name)
-		{
-			this->invite_list.erase(it);
-			break;
-		}
-		it++;
-	}
+	this->invite_list.erase(std::remove(this->invite_list.begin(), this->invite_list.end(), cli), this->invite_list.end());
 }

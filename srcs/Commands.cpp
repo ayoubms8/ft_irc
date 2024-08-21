@@ -20,10 +20,10 @@ void Server::invite_only_join(int fd, Client &cli, Channel &channel)
 {
 	for (size_t k = 0; k < channel.get_invite_list().size(); k++)
 	{
-		if (isCompared(channel.get_invite_list()[k], cli.get_nickname()))
+		if (channel.get_invite_list()[k] == &cli)
 		{
 			channel.add_client(&cli);
-			channel.remove_invite(cli.get_nickname());
+			channel.remove_invite(&cli);
 			return;
 		}
 	}
@@ -34,7 +34,7 @@ bool is_invited(Client &cli, Channel &channel)
 {
 	for (size_t k = 0; k < channel.get_invite_list().size(); k++)
 	{
-		if (isCompared(channel.get_invite_list()[k], cli.get_nickname()))
+		if (channel.get_invite_list()[k] == &cli)
 			return (true);
 	}
 	return (false);
@@ -54,14 +54,14 @@ std::vector<std::string> split(std::string str, char delim)
 	return result;
 }
 
-void Server::join_1(std::string &chnl, std::vector<std::string> &keys, size_t &k, int i, int fd)
+void Server::join_channel(std::string &chnl, std::vector<std::string> &keys, size_t &k, int i, int fd)
 {
 	if (chnl == "0")
 	{
 		for (int j = Channels.size() - 1; j >= 0; j--)
 		{
 			if (is_in_channel(*Clients[i], Channels[j]))
-				part_1(Channels[j].get_name(), i, fd);
+				part_channel(Channels[j].get_name(), i, fd);
 		}
 		return ;
 	}
@@ -120,10 +120,10 @@ void Server::join(int fd, std::vector<std::string> cmd, int i)
 		keys.push_back("");
 	size_t k = 0;
 	for (size_t it = 0; it < Chnls.size(); it++)
-		join_1(Chnls[it], keys, k, i, fd);
+		join_channel(Chnls[it], keys, k, i, fd);
 }
 
-void Server::part_1(const std::string &chnl, int i, int fd)
+void Server::part_channel(const std::string &chnl, int i, int fd)
 {
 	if (chnl.empty() || chnl[0] != '#' || chnl.size() < 2)
 	{
@@ -147,10 +147,10 @@ void Server::part(int fd, std::vector<std::string> cmd, int i)
 {
 	std::vector<std::string> Chnls = split(cmd[1], ',');
 	for (size_t it = 0; it < Chnls.size(); it++)
-		part_1(Chnls[it], i, fd);
+		part_channel(Chnls[it], i, fd);
 }
 
-void Server::privmsg_1(std::string &receiver, std::string &msg, int i, int fd)
+void Server::send_priv(std::string &receiver, std::string &msg, int i, int fd)
 {
 	if (msg.empty())
 	{
@@ -175,6 +175,7 @@ void Server::privmsg_1(std::string &receiver, std::string &msg, int i, int fd)
 			}
 		}
 		Server::senderror(403, Clients[i]->get_nickname(), fd, " " + receiver + " :No such channel\r\n");
+		return;
 	}
 	for (size_t j = 0; j < Clients.size(); j++)
 	{
@@ -192,7 +193,7 @@ void Server::privmsg(int fd, std::vector<std::string> cmd, int i)
 	std::vector<std::string> receivers = split(cmd[1], ',');
 
 	for (size_t it = 0; it < receivers.size(); it++)
-		privmsg_1(receivers[it], cmd[2], i, fd);
+		send_priv(receivers[it], cmd[2], i, fd);
 }
 
 void Server::topic(int fd, std::vector<std::string> cmd, int i)
@@ -316,7 +317,7 @@ void Server::invite(int fd, std::vector<std::string> cmd, int i)
 				{
 					if (is_in_channel(*Clients[k], Channels[j]))
 						return;
-					Channels[j].add_invite(Clients[k]->get_nickname());
+					Channels[j].add_invite(Clients[k]);
 					Server::sendmsg(Clients[k]->getfd(), ":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " INVITE " + cmd[1] + " " + cmd[2] + "\r\n");
 					return;
 				}
@@ -425,6 +426,12 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							if (cmd[3 + params].empty())
 							{
 								Server::senderror(461, Clients[i]->get_nickname(), fd, " MODE :Not enough parameters\r\n");
+								continue;
+							}
+							else if (std::atoi(cmd[3 + params].c_str()) < 0)
+							{
+								Server::senderror(468, Clients[i]->get_nickname(), fd, " MODE :Channel limit cannot be less than 0\r\n");
+								params++;
 								continue;
 							}
 							Channels[j].set_mode('l', true);
