@@ -20,7 +20,7 @@ void Server::invite_only_join(int fd, Client &cli, Channel &channel)
 {
 	for (size_t k = 0; k < channel.get_invite_list().size(); k++)
 	{
-		if (channel.get_invite_list()[k] == cli.get_nickname())
+		if (isCompared(channel.get_invite_list()[k], cli.get_nickname()))
 		{
 			channel.add_client(&cli);
 			channel.remove_invite(cli.get_nickname());
@@ -34,7 +34,7 @@ bool is_invited(Client &cli, Channel &channel)
 {
 	for (size_t k = 0; k < channel.get_invite_list().size(); k++)
 	{
-		if (channel.get_invite_list()[k] == cli.get_nickname())
+		if (isCompared(channel.get_invite_list()[k], cli.get_nickname()))
 			return (true);
 	}
 	return (false);
@@ -181,7 +181,7 @@ void Server::privmsg_1(std::string &receiver, std::string &msg, int i, int fd)
 	}
 	for (size_t j = 0; j < Clients.size(); j++)
 	{
-		if (Clients[j]->get_nickname() == receiver)
+		if (isCompared(Clients[j]->get_nickname(), receiver))
 		{
 			Server::sendmsg(Clients[j]->getfd(), ":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " PRIVMSG " + receiver + " :" + msg + "\r\n");
 			return;
@@ -273,7 +273,7 @@ void Server::kick(int fd, std::vector<std::string> cmd, int i)
 			}
 			for (std::map<Client *, bool>::iterator it = clis->begin(); it != clis->end(); it++)
 			{
-				if ((*it).first->get_nickname() == cmd[2])
+				if (isCompared((*it).first->get_nickname(), cmd[2]))
 				{
 					std::string ss;
 					if (cmd[3].empty())
@@ -315,7 +315,7 @@ void Server::invite(int fd, std::vector<std::string> cmd, int i)
 			}
 			for (size_t k = 0; k < Clients.size(); k++)
 			{
-				if (Clients[k]->get_nickname() == cmd[1])
+				if (isCompared(Clients[k]->get_nickname(), cmd[1]))
 				{
 					if (is_in_channel(*Clients[k], Channels[j]))
 						return;
@@ -391,7 +391,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							}
 							for (size_t l = 0; l < Clients.size(); l++)
 							{
-								if (Clients[l]->get_nickname() == cmd[3 + params])
+								if (isCompared(Clients[l]->get_nickname(), cmd[3 + params]))
 								{
 									Channels[j].set_operator(Clients[l]);
 									Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +o :" + cmd[3 + params] + "\r\n", Channels[j]);
@@ -472,7 +472,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							}
 							for (size_t l = 0; l < Clients.size(); l++)
 							{
-								if (Clients[l]->get_nickname() == cmd[3 + params])
+								if (isCompared(Clients[l]->get_nickname(), cmd[3 + params]))
 								{
 									Channels[j].remove_operator(Clients[l]);
 									Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " -o :" + cmd[3 + params] + "\r\n", Channels[j]);

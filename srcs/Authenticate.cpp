@@ -92,7 +92,8 @@ void Server::ft_nick(int fd, std::vector<std::string> cmd)
 		}
 		cmd[1] = cmd[1].substr(0, it);
 	}
-	cmd[1] = cmd[1].substr(0, 15);
+	if (cmd[1].size() > 15)
+		cmd[1] = cmd[1].substr(0, 15);
 	for (j = 0; j < Clients.size(); j++)
 	{
 		if (isCompared(Clients[j]->get_nickname(), cmd[1]) && Clients[j]->getfd() != cli->getfd())

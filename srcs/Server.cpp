@@ -166,6 +166,7 @@ std::vector<std::string> parse_cmd(std::string str)
     }
     if (!str.empty())
 	{
+		//check :
         cmd.push_back(str);
 	}
 	cmd.push_back("");
