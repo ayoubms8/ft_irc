@@ -362,9 +362,10 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 				}
 				if (is_op_in(*Clients[i], Channels[j]))
 					resp << " " << Channels[j].get_key();
-				else
+				else if (Channels[j].get_modes()['k'])
 					resp << " *";
-				resp << " " << Channels[j].get_limit();
+				if (Channels[j].get_modes()['l'])
+					resp << " " << Channels[j].get_limit();
 				resp << "\r\n";
 				Server::sendmsg(fd, resp.str());
 				return;
@@ -384,6 +385,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							continue;
 						if (cmd[2][k] == 'o')
 						{
+							int done = 0;
 							if (cmd[3 + params].empty())
 							{
 								Server::senderror(461, Clients[i]->get_nickname(), Clients[i]->getfd(), " MODE :Not enough parameters\r\n");
@@ -396,9 +398,12 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 									Channels[j].set_operator(Clients[l]);
 									Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " +o :" + cmd[3 + params] + "\r\n", Channels[j]);
 									params++;
-									continue;
+									done++;
+									break;
 								}
 							}
+							if (done)
+								continue;
 							Server::senderror(441, Clients[i]->get_nickname(), Clients[i]->getfd(), " :They aren't on that channel\r\n");
 							params++;
 							continue;
@@ -465,6 +470,7 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 							break;
 						if (cmd[2][k] == 'o')
 						{
+							int done = 0;
 							if (cmd[3 + params].empty())
 							{
 								Server::senderror(461, Clients[i]->get_nickname(), Clients[i]->getfd(), " MODE :Not enough parameters\r\n");
@@ -477,9 +483,12 @@ void Server::mode(int fd, std::vector<std::string> cmd, int i)
 									Channels[j].remove_operator(Clients[l]);
 									Server::broadcastmsg(":" + Clients[i]->get_nickname() + "!~" + Clients[i]->get_username() + "@" + Clients[i]->get_ip() + " MODE " + cmd[1] + " -o :" + cmd[3 + params] + "\r\n", Channels[j]);
 									params++;
-									continue;
+									done++;
+									break;
 								}
 							}
+							if (done)
+								continue;
 							Server::senderror(441, Clients[i]->get_nickname(), fd, " :They aren't on that channel\r\n");
 							params++;
 							continue;
