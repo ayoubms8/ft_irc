@@ -29,8 +29,6 @@ std::string get_users_in_channel(Channel channel)
 		else
 			users += (*it).first->get_nickname() + " ";
 	}
-	if (!users.empty())
-        users = users.substr(0, users.size() - 1);
 	return users;
 }
 
@@ -42,7 +40,6 @@ void Server::ch_join_message(Client &cli, Channel channel)
 	std::string users = get_users_in_channel(channel);
 	std::string username = cli.get_username();
 	std::string topic = channel.get_topic();
-	std::string mode = "+t";
 	
 	std::string msg = ":" + servername + " 353 " + nickname + " = " + channelname + " :" + users + "\r\n";
 	msg += ":" + servername + " 366 " + nickname + " " + channelname + " :End of /NAMES list.\r\n";
@@ -172,7 +169,10 @@ void Server::ft_quit(int fd, std::vector<std::string> cmd)
 				if (is_in_channel(*Clients[i], Channels[j]))
 					Channels[j].remove_client(Clients[i]);
 				if (Channels[j].get_clients()->empty() || (Channels[j].get_clients()->size() == 1 && Channels[j].get_clients()->begin()->first->get_nickname() == "Botto"))
+				{
+					std::cout << "remove channel" << std::endl;
 					Channels.erase(Channels.begin() + j);
+				}
 			}
 			Clients[i]->reset();
 			delete Clients[i];

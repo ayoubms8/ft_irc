@@ -14,7 +14,7 @@ Channel::Channel(std::string name) : name(name)
 {
 	this->limit = -1;
     this->modes.insert(std::pair<char, bool>('i', false));
-    this->modes.insert(std::pair<char, bool>('t', true));
+    this->modes.insert(std::pair<char, bool>('t', false));
     this->modes.insert(std::pair<char, bool>('l', false));
     this->modes.insert(std::pair<char, bool>('k', false));
 }
