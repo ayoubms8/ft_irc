@@ -77,7 +77,7 @@ ___
 - **Regarding the client/server connection** : [Beej's Guide to network programming](https://beej.us/guide/bgnet/pdf/bgnet_a4_c_1.pdf). This is super super helpful to better understand what is a socket, what the `poll()` function entails, which system calls we should use or in which order, and so on.
 
 
-<p align="center"> <img src="[assets/network.png](https://raw.githubusercontent.com/marineks/Ft_irc/refs/heads/main/assets/network.png)"> </p>
+<p align="center"> <img src="https://raw.githubusercontent.com/marineks/Ft_irc/refs/heads/main/assets/network.png"> </p>
 
 - **A link to the IRC Client Protocol with a good formatting** : [Modern IRC Client Protocol](https://modern.ircdocs.horse/). You will find there a description of all the commands with correct syntax, expected Numerical Replies,...
 
