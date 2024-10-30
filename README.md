@@ -20,7 +20,7 @@ The objective of this project is to reproduce the functioning of an IRC server.
 ###  _ :crystal_ball: Definition
 
 
-> "IRC (Internet Relay Chat) is a **protocol for real-time text messaging between internet-connected computers created in 1988**. It is mainly used for group discussion in chat rooms called “channels” although it supports private messages between two users, data transfer, and various server-side and client-side commands. As of April 2011, the top 100 IRC networks served over 500,000 users at a time on hundreds of thousands of channels." ([source](https://www.radware.com/security/ddos-knowledge-center/ddospedia/irc-internet-relay-chat/))
+> "IRC (Internet Relay Chat) is a **protocol for real-time text messaging between internet-connected computers created in 1988**. It is mainly used for group discussion in chat rooms called “channels” although it supports private messages between two users, data transfer, and various server-side and client-side commands. As of April 2011, the top 100 IRC networks served over 500,000 users at a time on hundreds of thousands of channels." ([source]([https://www.radware.com/security/ddos-knowledge-center/ddospedia/irc-internet-relay-chat/](https://github.com/ayoubms8/Ft_irc/blob/main/assets/irc-shema.png?raw=true)))
 
 <img src="assets/irc-shema.png">
 
