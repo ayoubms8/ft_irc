@@ -20,9 +20,9 @@ The objective of this project is to reproduce the functioning of an IRC server.
 ###  _ :crystal_ball: Definition
 
 
-> "IRC (Internet Relay Chat) is a **protocol for real-time text messaging between internet-connected computers created in 1988**. It is mainly used for group discussion in chat rooms called “channels” although it supports private messages between two users, data transfer, and various server-side and client-side commands. As of April 2011, the top 100 IRC networks served over 500,000 users at a time on hundreds of thousands of channels." ([source]([https://www.radware.com/security/ddos-knowledge-center/ddospedia/irc-internet-relay-chat/](https://github.com/ayoubms8/Ft_irc/blob/main/assets/irc-shema.png?raw=true)))
+> "IRC (Internet Relay Chat) is a **protocol for real-time text messaging between internet-connected computers created in 1988**. It is mainly used for group discussion in chat rooms called “channels” although it supports private messages between two users, data transfer, and various server-side and client-side commands. As of April 2011, the top 100 IRC networks served over 500,000 users at a time on hundreds of thousands of channels." ([source](https://www.radware.com/security/ddos-knowledge-center/ddospedia/irc-internet-relay-chat/))
 
-<img src="assets/irc-shema.png">
+<img src="https://raw.githubusercontent.com/marineks/Ft_irc/refs/heads/main/assets/irc-shema.png">
 
 ### _ :floppy_disk: Subject requirements
 
@@ -77,7 +77,7 @@ ___
 - **Regarding the client/server connection** : [Beej's Guide to network programming](https://beej.us/guide/bgnet/pdf/bgnet_a4_c_1.pdf). This is super super helpful to better understand what is a socket, what the `poll()` function entails, which system calls we should use or in which order, and so on.
 
 
-<p align="center"> <img src="assets/network.png"> </p>
+<p align="center"> <img src="[assets/network.png](https://raw.githubusercontent.com/marineks/Ft_irc/refs/heads/main/assets/network.png)"> </p>
 
 - **A link to the IRC Client Protocol with a good formatting** : [Modern IRC Client Protocol](https://modern.ircdocs.horse/). You will find there a description of all the commands with correct syntax, expected Numerical Replies,...
 
